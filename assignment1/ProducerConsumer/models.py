@@ -1,22 +1,14 @@
-"""Data models for work items transferred between producer and consumer threads."""
+"""Lightweight data structures shared between producers and consumers."""
 
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class WorkItem:
-    """
-    Immutable work item for producer-consumer pattern.
-    
-    Attributes:
-        item_id: Unique identifier for the work item
-        
-    Thread Safety:
-        frozen=True ensures immutability, making the object thread-safe without
-        additional synchronization primitives.
-    """
+    """Immutable payload tagged with a global sequence number."""
     item_id: int
+    sequence_number: int = 0
 
     def __repr__(self) -> str:
-        """String representation showing the item ID."""
-        return f"WorkItem(id={self.item_id})"
+        """String representation showing the item ID and sequence number."""
+        return f"WorkItem(id={self.item_id}, seq={self.sequence_number})"
 

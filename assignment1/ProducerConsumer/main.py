@@ -1,9 +1,9 @@
-"""ProducerConsumer pattern entry point."""
+"""Assignment 1: Producer-Consumer Pattern Implementation - Entry Point."""
 
 import sys
 import os
 
-# Ensure package imports resolve when executed as a script
+# Ensure project root is on sys.path when executed as a module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ProducerConsumer.cli import main

@@ -102,11 +102,11 @@ def test_buffer_state_continuity(caplog):
     produce_count = sum(1 for op in operation_types if op == "produce")
     consume_count = sum(1 for op in operation_types if op == "consume")
     
-    # We should have n_items + 1 produce operations (n_items + STOP_SIGNAL)
-    # and n_items + 1 consume operations (n_items + STOP_SIGNAL)
-    assert produce_count == n_items + 1, (
-        f"Expected {n_items + 1} produce operations, got {produce_count}"
+    # Producer emits n_items entries, SimulationManager enqueues STOP_SIGNALs separately
+    assert produce_count == n_items, (
+        f"Expected {n_items} produce operations, got {produce_count}"
     )
+    # Consumers process n_items items plus one STOP_SIGNAL
     assert consume_count == n_items + 1, (
         f"Expected {n_items + 1} consume operations, got {consume_count}"
     )

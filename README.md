@@ -4,7 +4,9 @@
 
 The Assignment 1 implementation lives under `assignment1/ProducerConsumer` and ships with a CLI plus a comprehensive pytest suite. Follow the steps below to run it locally.
 
-Producer-Consumer **Version 1** accepts *Item Number* (`--items`) and *Queue Capacity* (`--capacity`) as configurable inputs to the simulation.
+Producer-Consumer 
+**Version 1** accepts *Item Number* (`--items`) and *Queue Capacity* (`--capacity`) as configurable inputs to the simulation.  
+**Version 2** adds support for specifying the *Number of Producer Threads* (`--producers`) and *Number of Consumer Threads* (`--consumers`) in addition to v1, so users can control concurrency explicitly.
 
 ### 1. Prerequisites
 - Python 3.11+
@@ -35,5 +37,6 @@ python -m ProducerConsumer.main --items 100 --capacity 10
 python -m pytest tests -q
 ```
 
-For deeper documentation (architecture, logging, advanced scenarios), see `assignment1/README.md`.
+View screenshots in the Results Folder
+For deeper documentation, see README files in each folders.
 

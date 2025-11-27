@@ -1,19 +1,17 @@
-"""Utility functions for logging configuration."""
+"""Logging helpers shared by the CLI and tests."""
 
 import logging
-import sys
 from typing import List
 
 class LogCaptureHandler(logging.Handler):
-    """Custom handler that captures log records with timestamps (silent capture)."""
+    """In-memory handler we can query later for timestamp-ordered logs."""
     
     def __init__(self):
         super().__init__()
         self.captured_logs: List[logging.LogRecord] = []
     
     def emit(self, record: logging.LogRecord) -> None:
-        """Capture log record silently (no console output)."""
-        # Only capture, don't emit to console
+        """Capture log records without emitting them anywhere else."""
         self.captured_logs.append(record)
     
     def get_sorted_logs(self) -> List[logging.LogRecord]:
@@ -26,7 +24,7 @@ class LogCaptureHandler(logging.Handler):
 
 def setup_logging() -> logging.Handler:
     """
-    Configure root logger for multi-threaded simulation (silent capture only).
+    Configure the root logger for the simulation so every thread writes to the same buffer.
     
     Returns:
         LogCaptureHandler instance for accessing captured logs

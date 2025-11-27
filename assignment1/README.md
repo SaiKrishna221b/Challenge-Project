@@ -2,6 +2,124 @@
 
 A Python implementation of the classic **producer-consumer pattern** demonstrating thread synchronization, concurrent programming, blocking queues, and wait/notify mechanisms.
 
+##  Quick Start (Replication Steps)
+
+### Prerequisites
+- Python 3.11 or higher
+- pip (Python package manager)
+- Git (if cloning from repository)
+
+### Step-by-Step Setup
+
+1. **Clone or download the repository**
+   ```bash
+   git clone <repository-url>
+   cd assignment1
+   ```
+   Or download and extract the project folder.
+
+2. **Create a virtual environment (recommended)**
+   ```bash
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
+
+   # On Linux/macOS
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   This installs:
+   - `pytest==7.4.0` - Testing framework
+   - `pytest-timeout==2.1.0` - Timeout support for tests
+
+4. **Verify installation**
+   ```bash
+   python --version  # Should be 3.11 or higher
+   pytest --version  # Should show pytest 7.4.0
+   ```
+
+### Running the Application
+
+**Command-Line Mode:**
+```bash
+python -m ProducerConsumer.main --items 100 --capacity 10 --producers 2 --consumers 2
+```
+
+Parameters:
+- `--items`: Number of work items to generate (1-100000)
+- `--capacity`: Shared queue capacity (1-10000)
+- `--producers`: Number of producer threads (default 1)
+- `--consumers`: Number of consumer threads (default 1)
+
+**Interactive Mode:**
+```bash
+python -m ProducerConsumer.main
+```
+Then follow the prompts to enter:
+- Number of items to produce (range: 1-100000)
+- Queue capacity (range: 1-10000)
+- Number of producer threads (range: 1-100)
+- Number of consumer threads (range: 1-100)
+
+### Running Tests
+
+**Run all tests:**
+```bash
+pytest tests/
+```
+
+**Run specific test categories:**
+```bash
+# Assignment 1 tests only
+pytest tests/
+
+# Specific test file
+pytest tests/test_basic.py
+
+# With verbose output
+pytest tests/ -v
+```
+
+### Configuring Multiple Producers/Consumers
+
+- Increase `--producers` to fan out creation work while the shared queue enforces backpressure.
+- Increase `--consumers` to parallelize consumption; the manager sends one stop signal per consumer.
+- The `sequence_number` assigned to every `WorkItem` guarantees that merged results remain in the same order items were generated, regardless of thread interleaving.
+
+### Quick Verification
+
+After setup, verify everything works:
+```bash
+# Run a quick test
+python -m ProducerConsumer.main --items 10 --capacity 3 --producers 2 --consumers 2
+
+# Run all tests
+pytest tests/ -v
+```
+
+All tests should pass (43 tests total).
+
+### Troubleshooting
+
+- **Python version**: Ensure Python 3.11+ is installed
+  ```bash
+  python --version
+  ```
+
+- **Missing dependencies**: Reinstall requirements
+  ```bash
+  pip install -r requirements.txt --upgrade
+  ```
+
+- **Import errors**: Ensure you're in the project root directory and the virtual environment is activated
+
+---
+
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start-replication-steps)
@@ -34,6 +152,7 @@ The implementation demonstrates:
 - **Thread-Safe Operations**: Uses `queue.Queue` for safe concurrent access
 - **Blocking Behavior**: Automatically blocks when queue is full/empty
 - **Input Validation**: Comprehensive validation with clear error messages
+- **Configurable Concurrency**: Supports multiple producer and consumer threads with ordering guarantees
 - **Comprehensive Testing**: Unit tests for functional and performance scenarios
 - **CLI Interface**: Both command-line and interactive modes
 - **Detailed Logging**: Thread-aware logging for debugging concurrent operations
@@ -56,13 +175,13 @@ The implementation demonstrates:
    - Blocks when queue is empty (via wait/notify mechanism)
 
 3. **`SimulationManager`** (`ProducerConsumer/core.py`)
-   - Orchestrates producer and consumer threads
-   - Manages lifecycle and synchronization
+   - Orchestrates multiple producer and consumer threads
+   - Distributes work evenly, injects STOP signals per consumer, and merges thread-local buffers
    - Validates inputs and handles errors
 
 4. **`WorkItem`** (`ProducerConsumer/models.py`)
    - Immutable data class representing work items
-   - Thread-safe by design (frozen dataclass)
+   - Carries a global `sequence_number` to preserve FIFO ordering across multiple producers
 
 ### Data Flow
 
@@ -258,7 +377,7 @@ tests/test_performance.py::test_performance_large_dataset PASSED
 
 ```
 ProducerConsumer/
-├── ProducerConsumer/          # Assignment 1: Producer-Consumer Pattern
+├── ProducerConsumer/               # Assignment 1: Producer-Consumer Pattern
 │   ├── __init__.py            # Package initialization
 │   ├── main.py                # Entry point
 │   ├── core.py                # Core implementation (Producer, Consumer, SimulationManager)
@@ -266,18 +385,16 @@ ProducerConsumer/
 │   ├── cli.py                 # Command-line interface
 │   ├── utils.py               # Utility functions (logging setup)
 │   └── README.md              # Assignment 1 documentation
-├── assignment2/               # Assignment 2: CSV Analysis
-│   ├── __init__.py
-│   └── main.py                # Entry point (placeholder)
-├── tests/                     # Assignment 1 test suite
-│   ├── test_basic.py
-│   ├── test_workitem.py
-│   ├── test_validation.py
-│   ├── test_edgecases.py
-│   ├── test_dataIntegrity.py
-│   ├── test_threadBehaviour.py
-│   ├── test_bufferState.py
-│   └── test_performance.py
+├── tests/                     # Test suite
+│   ├── ProducerConsumer/           # Assignment 1 tests (8 test files)
+│   │   ├── test_basic.py
+│   │   ├── test_workitem.py
+│   │   ├── test_validation.py
+│   │   ├── test_edgecases.py
+│   │   ├── test_dataIntegrity.py
+│   │   ├── test_threadBehaviour.py
+│   │   ├── test_bufferState.py
+│   │   └── test_performance.py
 ├── .github/
 │   └── workflows/
 │       └── ci.yaml            # CI/CD pipeline

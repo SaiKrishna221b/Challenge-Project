@@ -7,21 +7,23 @@ from .core import SimulationManager
 from .utils import setup_logging
 
 def parse_args():
-    """Parse command-line arguments."""
+    """Wire up the CLI switches for batch-friendly runs."""
     parser = argparse.ArgumentParser(
         description="Producer-Consumer Simulation - Demonstrates thread synchronization",
         epilog="""
-Examples:
-  python ProducerConsumer/main.py --items 100 --capacity 10
+        Examples:
+  python ProducerConsumer/main.py --items 100 --capacity 10 --producers 2 --consumers 3
   python ProducerConsumer/main.py  # Interactive mode
         """
     )
     parser.add_argument("--items", type=int, help="Number of items to produce (allowed range: 1-100000)")
     parser.add_argument("--capacity", type=int, help="Capacity of the shared queue (allowed range: 1-10000)")
+    parser.add_argument("--producers", type=int, help="Number of producer threads (allowed range: 1-100)")
+    parser.add_argument("--consumers", type=int, help="Number of consumer threads (allowed range: 1-100)")
     return parser.parse_args()
 
 def get_valid_input(prompt: str, min_value: int = 1, max_value: int = None) -> int:
-    """Get integer input interactively within specified range.
+    """Prompt until we receive an integer inside the allowed range.
     
     Args:
         prompt: The prompt string to display
@@ -57,7 +59,7 @@ def get_valid_input(prompt: str, min_value: int = 1, max_value: int = None) -> i
             print("Error: Invalid input. Please enter a number.")
 
 def display_timestamp_ordered_logs(log_handler) -> None:
-    """Display logs sorted by timestamp."""
+    """Print captured logs in chronological order for easier reading."""
     sorted_logs = log_handler.get_sorted_logs()
     
     formatter = logging.Formatter("[%(threadName)s] - %(levelname)s - %(message)s")
@@ -66,7 +68,7 @@ def display_timestamp_ordered_logs(log_handler) -> None:
 
 def run_simulation():
     """Run a single simulation iteration."""
-    # Clear any existing log handlers and set up fresh
+    # Replace any existing handlers so we have a clean capture for this run
     root_logger = logging.getLogger()
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
@@ -80,15 +82,15 @@ def run_simulation():
     print()
     print("Welcome to the Producer-Consumer Pattern Demonstration!")
     print()
-    print("This simulation demonstrates concurrent programming with two")
-    print("threads working together:")
+    print("This simulation demonstrates concurrent programming with multiple")
+    print("producer and consumer threads working together:")
     print()
-    print("  • Producer Thread: Creates work items and adds them to a")
+    print("  • Producer Threads: Create work items and add them to a")
     print("    shared buffer (queue)")
-    print("  • Consumer Thread: Retrieves work items from the buffer")
-    print("    and processes them")
+    print("  • Consumer Threads: Retrieve work items from the buffer")
+    print("    and process them")
     print()
-    print("The output shows real-time synchronization between threads.")
+    print("The output shows real-time chronological order of events between threads.")
     print("Watch how the buffer state changes as items are produced")
     print("and consumed concurrently!")
     print()
@@ -100,6 +102,8 @@ def run_simulation():
     if args.items is not None and args.capacity is not None:
         n_items = args.items
         capacity = args.capacity
+        num_producers = args.producers if args.producers is not None else 1
+        num_consumers = args.consumers if args.consumers is not None else 1
         
         if n_items < 1 or n_items > 100000:
             print(f"Error: Number of items must be in range 1-100000, got {n_items}")
@@ -107,14 +111,22 @@ def run_simulation():
         if capacity < 1 or capacity > 10000:
             print(f"Error: Queue capacity must be in range 1-10000, got {capacity}")
             return False
+        if num_producers < 1 or num_producers > 100:
+            print(f"Error: Number of producers must be in range 1-100, got {num_producers}")
+            return False
+        if num_consumers < 1 or num_consumers > 100:
+            print(f"Error: Number of consumers must be in range 1-100, got {num_consumers}")
+            return False
     else:
         try:
             n_items = get_valid_input("Enter number of items to produce", min_value=1, max_value=100000)
             capacity = get_valid_input("Enter queue capacity", min_value=1, max_value=10000)
+            num_producers = get_valid_input("Enter number of producer threads", min_value=1, max_value=100)
+            num_consumers = get_valid_input("Enter number of consumer threads", min_value=1, max_value=100)
         except EOFError as e:
             print(f"\nError: {e}")
             print("\nUsage examples:")
-            print("  python ProducerConsumer/main.py --items 20 --capacity 5")
+            print("  python ProducerConsumer/main.py --items 20 --capacity 5 --producers 2 --consumers 3")
             return False
 
     print()
@@ -122,12 +134,15 @@ def run_simulation():
     print("====")
     print()
     print(f"Buffer capacity: {capacity}")
+    print(f"Number of producers: {num_producers}")
+    print(f"Number of consumers: {num_consumers}")
     print()
     
-    logger.info(f"Starting simulation with {n_items} items and capacity {capacity}")
+    logger.info(f"Starting simulation with {n_items} items, capacity {capacity}, "
+                f"{num_producers} producers, {num_consumers} consumers")
 
     try:
-        manager = SimulationManager(n_items, capacity)
+        manager = SimulationManager(n_items, capacity, num_producers, num_consumers)
     except (ValueError, TypeError) as e:
         print(f"Error: Invalid input - {e}")
         logger.error(f"Validation error: {e}")
@@ -163,7 +178,7 @@ def main():
             success = run_simulation()
             
             if not sys.stdin.isatty():
-                # Non-interactive mode, exit after one run
+                # Non-interactive shell (e.g., CLI flags or CI) should exit immediately
                 return 0 if success else 1
             
             # Ask if user wants to run again
@@ -172,7 +187,7 @@ def main():
                 if response not in ('y', 'yes'):
                     print("Exiting. Thank you!")
                     break
-                print()  # Add spacing before next run
+                print()  # Add spacing before the next iteration
             except (EOFError, KeyboardInterrupt):
                 print("\nExiting. Thank you!")
                 break

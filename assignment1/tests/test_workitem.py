@@ -17,7 +17,7 @@ def test_workitem_immutability():
 def test_workitem_repr():
     """Test WorkItem string representation."""
     item = WorkItem(item_id=42)
-    assert repr(item) == "WorkItem(id=42)"
+    assert repr(item) == "WorkItem(id=42, seq=0)"
 
 def test_workitem_equality():
     """Test WorkItem equality comparison."""
