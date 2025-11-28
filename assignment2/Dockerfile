@@ -14,7 +14,12 @@ COPY src ./src
 RUN mvn clean package -DskipTests=false
 
 # Stage 2: Runtime
-# Use a lightweight Java Runtime Environment (JRE) forw
+# Use a lightweight Java Runtime Environment (JRE) for the final image
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+
+# Copy the compiled JAR and dependencies from the builder stage
 # We assume the maven-shade-plugin or simple classpath approach. 
 # Since we used 'exec:java', we just need the classes and resources.
 # However, copying the 'target' folder is easiest for a simple execution.

@@ -6,10 +6,23 @@ This application performs data analysis on a CSV dataset of sales transactions. 
 ## Features & Stream Operations
 The solution implements the following functional operations:
 *   **Filtering & Mapping**: Parsing raw CSV lines into `Sale` objects (`map`), filtering empty lines.
-*   **Aggregation**: Calculating total revenue (`mapToDouble`, `sum`).
+*   **Aggregation**: Calculating total sales (`mapToDouble`, `sum`).
 *   **Grouping**: Grouping data by Category or Region (`collect`, `groupingBy`).
-*   **Statistical Analysis**: Finding averages and maximums (`averagingDouble`, `max`).
-*   **Sorting**: Finding top elements using Comparators (`sorted`, `max`).
+*   **Statistical Analysis**: Finding detailed stats (Min, Max, Avg) (`summarizingDouble`).
+*   **Temporal Analysis**: Trending sales by month (`groupingBy` date fields).
+*   **Partitioning**: Splitting orders by value threshold (`partitioningBy`).
+*   **Scale**: Supports chunked processing for large files.
+
+### Dataset Schema
+| Field | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **TransactionId** | String | Unique identifier for the sale | `T00001` |
+| **Date** | LocalDate | Date of the transaction (YYYY-MM-DD) | `2024-01-15` |
+| **Category** | String | Product category group | `Electronics` |
+| **Product** | String | Specific item name | `Laptop` |
+| **Region** | String | Geographic location of sale | `North` |
+| **Quantity** | Integer | Number of units sold | `2` |
+| **UnitPrice** | Double | Price per single unit | `1200.00` |
 
 ## Project Structure
 ```
@@ -51,6 +64,35 @@ assignment2/
     mvn test
     ```
 
+### Option 2: Running Manually (Without Maven)
+If Maven is not installed, you can compile and run using standard Java commands:
+
+**Windows (PowerShell):**
+```powershell
+# 1. Create bin directory
+mkdir assignment2/bin
+
+# 2. Compile source files
+javac -d assignment2/bin assignment2/src/main/java/com/assignment2/*.java
+
+# 3. Copy resource file to bin (classpath root)
+copy assignment2/src/main/resources/sales_data.csv assignment2/bin/sales_data.csv
+
+# 4. Run the application
+java -cp assignment2/bin com.assignment2.Main
+```
+
+### Option 3: Running Tests Manually (Without JUnit/Maven)
+If you do not have Maven or JUnit libraries installed, you can run the provided `ManualTest` script which performs the same verifications using pure Java:
+
+```powershell
+# Compile the manual test script
+javac -d assignment2/bin assignment2/src/main/java/com/assignment2/*.java assignment2/src/test/java/com/assignment2/ManualTest.java
+
+# Run the test script
+java -cp assignment2/bin com.assignment2.ManualTest
+```
+
 ### Option 4: Running with Docker (Zero Dependencies)
 This ensures the application runs in a completely isolated environment. The Docker build process automatically executes all unit tests before creating the image.
 
@@ -80,36 +122,39 @@ Instead of using an external library like OpenCSV, I implemented a custom parser
 *   **Assumption**: The CSV format is simple (no commas inside fields). Code handles empty trailing lines gracefully.
 
 ### 3. Dataset Selection
-I constructed a custom `sales_data.csv` containing 20 transactions with fields: `TransactionId`, `Date`, `Category`, `Product`, `Region`, `Quantity`, `UnitPrice`.
-*   **Why**: This schema supports multi-dimensional aggregation (Category, Region, Time) and numerical analysis (Revenue, Count, Averages), allowing for a rich demonstration of Stream capabilities.
+I constructed a custom `sales_data.csv` containing ~20,000 transactions with fields: `TransactionId`, `Date`, `Category`, `Product`, `Region`, `Quantity`, `UnitPrice`.
+*   **Why**: This large schema supports multi-dimensional aggregation (Category, Region, Time) and meaningful performance testing for the chunking feature.
+
+### 4. Advanced Feature: Chunked Processing
+To support large-scale data processing (e.g., files larger than available RAM), the application includes a `processInChunks` method.
+*   **Architecture**: It reads the file using a lazy iterator, accumulating a fixed number of records (chunk size) into memory.
+*   **Accumulation**: Each chunk updates a set of global counters/sums.
+*   **Retry Logic**: If a chunk fails to process, the system attempts to retry before skipping, simulating fault-tolerant batch processing.
 
 ## Sample Output
 ```text
 --- Loading Sales Data ---
-Loaded 20 sales records.
+Loaded 20000 sales records.
 
---- Analysis Results ---
-Total Revenue: $9582.00
+=====================================
+       SALES DATA ANALYSIS
+=====================================
 
-Revenue by Category:
-  Clothing: $767.00
-  Electronics: $7975.00
-  Home: $840.00
+1. Total Sales Revenue:
+   $110,407,964.25
 
-Top Selling Product (by Quantity):
-  Socks (20 units)
+2. Total Sales by Category:
+   Clothing: $22,685,861.13
+   Electronics: $22,412,091.25
+   ...
 
-Sales Count by Region:
-  West: 5 transactions
-  South: 5 transactions
-  North: 5 transactions
-  East: 5 transactions
+7. Detailed Statistics by Category (NEW):
+   Clothing:
+      Count: 4062, Min: $20.05, Max: $19,985.10, Avg: $5,584.90
+   ...
 
-Average Unit Price by Category:
-  Clothing: $37.00
-  Electronics: $514.38
-  Home: $93.33
-
-Most Expensive Sale Transaction:
-  ID: T008 | Product: Laptop | Amount: $2400.00
+8. Monthly Sales Trend (NEW):
+   2024-01: $9,494,647.62
+   2024-02: $8,408,740.30
+   ...
 ```

@@ -8,8 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.DoubleSummaryStatistics;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,23 +74,42 @@ public class SalesAnalyzer {
         return new ArrayList<>(sales);
     }
 
-    // --- Analytical Methods using Streams & Aggregation ---
+    // ==========================================
+    // 1. BASIC AGGREGATIONS
+    // ==========================================
 
     /**
-     * Calculates total revenue across all sales.
-     * Demonstrates: mapToDouble, sum
+     * Calculates total sales revenue across all records.
      */
-    public double calculateTotalRevenue() {
+    public double calculateTotalSales() {
         return sales.stream()
                 .mapToDouble(Sale::getTotalAmount)
                 .sum();
     }
 
+    // ==========================================
+    // 2. REGIONAL ANALYSIS
+    // ==========================================
+
+    /**
+     * Counts the number of sales transactions per region.
+     */
+    public Map<String, Long> getOrderCountByRegion() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::region,
+                        Collectors.counting()
+                ));
+    }
+
+    // ==========================================
+    // 3. CATEGORY ANALYSIS
+    // ==========================================
+
     /**
      * Groups sales by Category and calculates total revenue for each.
-     * Demonstrates: collect, groupingBy, summingDouble
      */
-    public Map<String, Double> getRevenueByCategory() {
+    public Map<String, Double> getSalesByCategory() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
                         Sale::category,
@@ -97,10 +118,35 @@ public class SalesAnalyzer {
     }
 
     /**
-     * Finds the top selling product based on quantity sold.
-     * Demonstrates: collect, groupingBy, summingInt, max Map.Entry
+     * Calculates the average unit price for each category.
      */
-    public Optional<Map.Entry<String, Integer>> getTopSellingProduct() {
+    public Map<String, Double> getAverageSalesByCategory() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::category,
+                        Collectors.averagingDouble(Sale::unitPrice)
+                ));
+    }
+
+    /**
+     * Advanced: Calculates comprehensive statistics (Min, Max, Avg, Sum, Count) per category.
+     */
+    public Map<String, DoubleSummaryStatistics> getSalesStatisticsByCategory() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::category,
+                        Collectors.summarizingDouble(Sale::getTotalAmount)
+                ));
+    }
+
+    // ==========================================
+    // 4. PRODUCT ANALYSIS
+    // ==========================================
+
+    /**
+     * Finds the top selling product based on quantity sold.
+     */
+    public Optional<Map.Entry<String, Integer>> getTopProductByQuantity() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
                         Sale::product,
@@ -110,39 +156,49 @@ public class SalesAnalyzer {
                 .max(Map.Entry.comparingByValue());
     }
 
+    // ==========================================
+    // 5. TEMPORAL ANALYSIS
+    // ==========================================
+
     /**
-     * Counts the number of sales transactions per region.
-     * Demonstrates: collect, groupingBy, counting
+     * Aggregates sales by Month (YYYY-MM).
      */
-    public Map<String, Long> getSalesCountByRegion() {
+    public Map<String, Double> getMonthlySalesTrend() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
-                        Sale::region,
-                        Collectors.counting()
+                        sale -> sale.date().getYear() + "-" + String.format("%02d", sale.date().getMonthValue()),
+                        LinkedHashMap::new, // Preserve order
+                        Collectors.summingDouble(Sale::getTotalAmount)
                 ));
     }
 
-    /**
-     * Calculates the average unit price for each category.
-     * Demonstrates: collect, groupingBy, averagingDouble
-     */
-    public Map<String, Double> getAveragePriceByCategory() {
-        return sales.stream()
-                .collect(Collectors.groupingBy(
-                        Sale::category,
-                        Collectors.averagingDouble(Sale::unitPrice)
-                ));
-    }
+    // ==========================================
+    // 6. ADVANCED ANALYSIS
+    // ==========================================
 
     /**
-     * Finds the most expensive sale (highest total amount).
-     * Demonstrates: max, Comparator
+     * Finds the single highest value order.
      */
-    public Optional<Sale> getMostExpensiveSale() {
+    public Optional<Sale> getHighestValueOrder() {
         return sales.stream()
                 .max(Comparator.comparingDouble(Sale::getTotalAmount));
     }
+
+    /**
+     * Partitions orders into "High Value" and "Low Value" based on a threshold.
+     * True = High Value, False = Low Value.
+     */
+    public Map<Boolean, List<Sale>> partitionOrdersByValue(double threshold) {
+        return sales.stream()
+                .collect(Collectors.partitioningBy(
+                        sale -> sale.getTotalAmount() >= threshold
+                ));
+    }
     
+    // ==========================================
+    // 7. SCALE / CHUNKING LOGIC
+    // ==========================================
+
     /**
      * ADVANCED: Processes the file in chunks to handle large datasets.
      * 
