@@ -1,89 +1,88 @@
 # Intuit Build Challenge
 
-This repository contains my original contributions for the 2 assignment questions in the Build Challenge (see instructions pdf in root folder)
+This repository contains my solutions for the Intuit Build Challenge.
+
+### Quick Links
+*   [Replication Steps](#quick-start-guide)
+*   [Project Structure](#project-structure)
+*   [Results: Producer Consumer v2.1](#assignment-1-producer-consumer-pattern)
+*   [Results: Sales Analyzer v2.0](#sample-output-assignment-2)
 
 ---
 
 ## Assignment 1: Producer-Consumer Pattern
-Located in `assignment1/ProducerConsumer`. Implements a thread-safe bounded buffer simulation.
+**Path:** `assignment1/ProducerConsumer`
 
-### Features by Version
+A robust, thread-safe implementation of the classic synchronization problem, evolved through multiple iterations.
 
-#### Version 1 (Baseline)
-*   **Configurable Items**: Set the total number of items to produce (`--items`).
-*   **Configurable Capacity**: Set the size of the bounded buffer (`--capacity`).
-*   **Interactive Mode**: Prompts user for inputs if flags are omitted.
-*   **Thread Safety**: Uses `threading.Lock` plus the `queue.Queue` condition variables to protect critical sections.
+### Version History
 
-#### Version 2 (New Features)
-*   **Multi-Producer/Consumer**: Support for multiple concurrent producer and consumer threads.
-*   **New CLI Flags**:
-    *   `--producers N`: Set number of producer threads.
-    *   `--consumers N`: Set number of consumer threads.
-*   **Enhanced Logging**: Tracks thread IDs to visualize concurrency.
+#### **v1.0: The Core Implementation**
+*   **Bounded Buffer**: Implemented a thread-safe queue using `threading.Lock` and `Condition` variables through Queue.queue methods.
+*   **Basic Synchronization**: Handled `wait()` and `notify()` logic to prevent race conditions.
+*   **Interactive CLI**: Prompts users for `items` and `capacity` if arguments are missing.
+*   **CI Pipeline**: Automated testing via GitHub Actions.
 
-#### Version 2.1 (Latest)
-*   **Save Output Logs**: Use `--save-logs` or answer “y” when prompted to store simulation logs under `simulation_logs/YYYY/MM/DD.txt`.
-*   **Expanded Test Coverage**: Added dedicated tests for log persistence and tightened concurrency edge-case coverage.
+#### **v2.0: Enhanced Concurrency**
+*   **Multi-Threading Support**: Scaled to support $N$ Producers and $M$ Consumers running simultaneously.
+*   **CLI Arguments**: Added `--producers` and `--consumers` flags for granular control.
+*   **Sequence Tracking**: Implemented global sequence numbering to verify data integrity across threads.
 
-### Quick Start
-```bash
-cd assignment1
-pip install -r requirements.txt
-
-# Run Simulation
-python -m ProducerConsumer.main --items 50 --capacity 5 --producers 2 --consumers 2
-
-# Run Tests
-python -m pytest tests
-```
-
-### Replication Steps (Docker)
-To run without installing Python locally:
-```bash
-cd assignment1
-docker build -t producer-consumer .
-docker run -it --rm producer-consumer --items 50 --capacity 5
-```
-
-*For detailed documentation and screenshots, see `assignment1/README.md`.*
+#### **v2.1: DevOps & Robustness**
+*   **Dockerization**: Full container support for isolated execution.
+*   **Structured Logging**: Thread-aware logs for debugging complex interleaving and saved output file.
 
 ---
 
 ## Assignment 2: Sales Data Analysis
-Located in `assignment2`. A Java application demonstrating functional programming and stream processing on CSV data.
+**Path:** `assignment2`
 
-### Overview
-*   **Tech Stack**: Java 17+, Maven, JUnit 5.
-*   **Key Concepts**: Java Records, Stream API (`map`, `reduce`, `collect`), Aggregation.
-*   **Data**: Analyzes a dataset of 20,000+ sales records.
+A high-performance data analysis tool leveraging Java Streams and Functional Programming paradigms.
 
-### Replication Steps
+### Version History
 
-#### Option 1: Using Maven (Recommended)
-Builds the project, runs unit tests, and executes the analysis.
+#### **v1.0: Functional MVP**
+*   **Stream API**: Replaced imperative loops with declarative Stream pipelines (`map`, `filter`, `collect`).
+*   **Core Metrics**: Implemented 6 essential aggregations:
+    *   Total Sales Revenue
+    *   Revenue by Category
+    *   Top Selling Product
+    *   Order Count by Region
+    *   Average Unit Price
+    *   Highest Value Order
+*   **Immutable Data**: Used Java Records (`record Sale`) to enforce immutability.
+
+#### **v2.0: Enterprise Scale & Analytics**
+*   **Advanced Analytics**:
+    *   **Statistical Profiles**: Uses `DoubleSummaryStatistics` for single-pass calculation of Min/Max/Avg/Sum.
+    *   **Temporal Trends**: Aggregates sales by Month (`YYYY-MM`) for time-series analysis.
+    *   **Partitioning**: Segments data into High/Low value tiers.
+*   **Scale Architecture**:
+    *   **Chunk Processing Engine**: Implemented a lazy-loading batch processor to handle datasets larger than RAM (verified with 20,000+ rows).
+    *   **Fault Tolerance**: Built-in retry logic for failed chunks.
+  
+
+---
+
+## Quick Start Guide
+
+### Assignment 1 (Python)
+```bash
+cd assignment1
+pip install -r requirements.txt
+# Run the full multi-threaded simulation
+python -m ProducerConsumer.main --items 50 --capacity 5 --producers 2 --consumers 2
+```
+
+### Assignment 2 (Java)
 ```bash
 cd assignment2
+# Build and Run using Maven
 mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main"
-```
-*To run with a specific chunk size (e.g., 1000):*
-```bash
+
+# OR Run the Advanced Chunking Engine (Batch Size 1000)
 mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main" "-Dexec.args=1000"
 ```
-
-#### Option 2: Using Docker (Zero Dependencies)
-Runs the application in an isolated container environment.
-```bash
-cd assignment2
-
-# Build Image (Runs tests automatically)
-docker build -t sales-analyzer .
-
-# Run Container
-docker run --rm sales-analyzer
-```
-
-*For design choices and full output samples, see `assignment2/README.md`.*
 
 ---
 
@@ -110,13 +109,8 @@ docker run --rm sales-analyzer
 
 The repository is configured with a **GitHub Actions** pipeline to ensure code quality on every push.
 
-*   **Python Workflow**:
-    *   Sets up Python 3.11 environment.
-    *   Installs dependencies (`requirements.txt`).
-    *   Runs the full `pytest` suite.
-*   **Java Workflow**:
-    *   Sets up JDK 17 environment.
-    *   Runs `mvn clean test` to verify compilation and unit tests.
+*   **Python Workflow**: Triggers on changes to `assignment1/`. Runs `pytest`.
+*   **Java Workflow**: Triggers on changes to `assignment2/`. Runs `mvn test`.
 *   **Status**: ✅ Builds pass automatically on pull requests.
 
 ---
@@ -134,6 +128,7 @@ projectIntuit/
 │   │   └── cli.py                          # Argument parsing logic
 │   ├── tests/                              # Pytest suite (concurrency, edge cases, integration)
 │   └── requirements.txt                    # Python dependencies (pytest)
+│   └── Dockerfile                          # Container definition
 │
 └── assignment2/                            # Java Sales Analysis Solution
     ├── src/

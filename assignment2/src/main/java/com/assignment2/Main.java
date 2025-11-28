@@ -62,18 +62,22 @@ public class Main {
                 System.out.printf("   ID: %s | Product: %s | Amount: $%.2f%n", 
                     sale.transactionId(), sale.product(), sale.getTotalAmount()));
 
-            // 7. Advanced Statistics (NEW)
-            System.out.println("\n7. Detailed Statistics by Category (NEW):");
-            analyzer.getSalesStatisticsByCategory().forEach((category, stats) -> {
-                System.out.println("   " + category + ":");
-                System.out.printf("      Count: %d, Min: $%.2f, Max: $%.2f, Avg: $%.2f%n", 
-                    stats.getCount(), stats.getMin(), stats.getMax(), stats.getAverage());
-            });
+                // 7. Advanced Statistics
+                System.out.println("\n7. Detailed Statistics by Category:");
+                analyzer.getSalesStatisticsByCategory().forEach((category, stats) -> {
+                    System.out.println("   " + category + ":");
+                    System.out.printf("      Count: %d, Min: $%.2f, Max: $%.2f, Avg: $%.2f%n", 
+                        stats.getCount(), stats.getMin(), stats.getMax(), stats.getAverage());
+                });
 
-            // 8. Monthly Trend (NEW)
-            System.out.println("\n8. Monthly Sales Trend (NEW):");
-            analyzer.getMonthlySalesTrend().forEach((month, total) -> 
-                System.out.printf("   %s: $%.2f%n", month, total));
+                // 8. Monthly Trend
+                System.out.println("\n8. Monthly Sales Trend:");
+                analyzer.getMonthlySalesTrend().forEach((month, total) -> 
+                    System.out.printf("   %s: $%.2f%n", month, total));
+
+            System.out.println("\n=============================================");
+            System.out.println("          END OF SALES REPORT");
+            System.out.println("=============================================");
 
         } catch (IOException e) {
             System.err.println("Error reading data: " + e.getMessage());
