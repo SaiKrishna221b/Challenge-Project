@@ -34,6 +34,14 @@ python -m ProducerConsumer.main --items 50 --capacity 5 --producers 2 --consumer
 python -m pytest tests
 ```
 
+### Replication Steps (Docker)
+To run without installing Python locally:
+```bash
+cd assignment1
+docker build -t producer-consumer .
+docker run -it --rm producer-consumer --items 50 --capacity 5
+```
+
 *For detailed documentation and screenshots, see `assignment1/README.md`.*
 
 ---
