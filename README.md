@@ -5,8 +5,8 @@ This repository contains my solutions for the Intuit Build Challenge.
 ### Quick Links
 *   [Replication Steps](#quick-start-guide)
 *   [Project Structure](#project-structure)
-*   [Results: Producer Consumer v2.1](#assignment-1-producer-consumer-pattern)
-*   [Results: Sales Analyzer v2.0](#sample-output-assignment-2)
+*   [Results: Producer Consumer v2.1](#assignment-1-results-v21)
+*   [Results: Sales Analyzer v2.0](#assignment-2-results-v20)
 
 ---
 
@@ -111,7 +111,7 @@ The repository is configured with a **GitHub Actions** pipeline to ensure code q
 
 *   **Python Workflow**: Triggers on changes to `assignment1/`. Runs `pytest`.
 *   **Java Workflow**: Triggers on changes to `assignment2/`. Runs `mvn test`.
-*   **Status**: ✅ Builds pass automatically on pull requests.
+
 
 ---
 
@@ -144,3 +144,77 @@ projectIntuit/
     ├── pom.xml                             # Maven build configuration
     └── Dockerfile                          # Container definition for build/test/run
 ```
+
+---
+
+## Assignment 1 Results (v2.1)
+
+Here are the execution results from the **Producer-Consumer v2.1** implementation (Dockerized, Multi-threaded).
+
+![Producer Consumer Output 1](Results/ProducerConsumer%20v2.1/prodConsumer%20v2.1%20ss01.png)
+![Producer Consumer Output 2](Results/ProducerConsumer%20v2.1/prodConsumer%20v2.1%20ss02.png)
+
+---
+
+## Assignment 2 Results (v2.0)
+
+Here are the execution results from the **Sales Analyzer v2.0** (Java Streams, Large Dataset).
+
+![Sales Analyzer Output 1](Results/SalesAnalyzer%20v2/SalesAnalysis%20v2%20ss01.png)
+![Sales Analyzer Output 2](Results/SalesAnalyzer%20v2/SalesAnalysis%20v2%20ss02.png)
+
+<details>
+<summary>Click to see full text output</summary>
+
+```text
+--- Loading Sales Data ---
+Loaded 20000 sales records.
+
+=====================================
+       SALES DATA ANALYSIS
+=====================================
+
+1. Total Sales Revenue:
+   $110,407,964.25
+
+2. Total Sales by Category:
+   Clothing: $22,685,861.13
+   Electronics: $22,412,091.25
+   Books: $21,924,422.47
+   Home: $21,660,219.72
+   Sports: $21,725,369.68
+
+3. Top Selling Product (by Quantity):
+   Hat (4638 units)
+
+4. Orders by Region:
+   West: 5042 orders
+   South: 5015 orders
+   North: 4953 orders
+   East: 4990 orders
+
+5. Average Unit Price by Category:
+   Clothing: $1006.63
+   Electronics: $1011.01
+   Books: $999.52
+   Home: $1001.55
+   Sports: $1004.16
+
+6. Highest Value Order:
+   ID: T07864 | Product: Monitor | Amount: $19990.70
+
+7. Detailed Statistics by Category:
+   Clothing:
+      Count: 4062, Min: $20.05, Max: $19985.10, Avg: $5584.90
+   ... (truncated for brevity)
+
+8. Monthly Sales Trend:
+   2024-01: $9,494,647.62
+   2024-02: $8,408,740.30
+   ... (truncated for brevity)
+
+=============================================
+          END OF SALES REPORT
+=============================================
+```
+</details>
