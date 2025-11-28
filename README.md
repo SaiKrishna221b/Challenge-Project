@@ -1,42 +1,147 @@
-#Intuit Build Challenge
+# Intuit Build Challenge
 
-## Assignment 1 – Producer-Consumer Pattern
+This repository contains solutions for the Intuit Build Challenge assignments.
 
-The Assignment 1 implementation lives under `assignment1/ProducerConsumer` and ships with a CLI plus a comprehensive pytest suite. Follow the steps below to run it locally.
+---
 
-Producer-Consumer 
-**Version 1** accepts *Item Number* (`--items`) and *Queue Capacity* (`--capacity`) as configurable inputs to the simulation.  
-**Version 2** adds support for specifying the *Number of Producer Threads* (`--producers`) and *Number of Consumer Threads* (`--consumers`) in addition to v1, so users can control concurrency explicitly.
+## Assignment 1: Producer-Consumer Pattern
+Located in `assignment1/ProducerConsumer`. Implements a thread-safe bounded buffer simulation.
 
-### 1. Prerequisites
-- Python 3.11+
+### Features by Version
 
-### 2. Setup
+#### Version 1 (Baseline)
+*   **Configurable Items**: Set the total number of items to produce (`--items`).
+*   **Configurable Capacity**: Set the size of the bounded buffer (`--capacity`).
+*   **Interactive Mode**: Prompts user for inputs if flags are omitted.
+*   **Thread Safety**: Uses `threading.Lock` and `Condition` variables.
+
+#### Version 2 (New Features)
+*   **Multi-Producer/Consumer**: Support for multiple concurrent producer and consumer threads.
+*   **New CLI Flags**:
+    *   `--producers N`: Set number of producer threads.
+    *   `--consumers N`: Set number of consumer threads.
+*   **Enhanced Logging**: Tracks thread IDs to visualize concurrency.
+
+### Quick Start
 ```bash
-# From the project root
 cd assignment1
-
-# (Optional but recommended)
-python -m venv .venv
-.venv\Scripts\activate      # Windows
-source .venv/bin/activate   # macOS/Linux
-
 pip install -r requirements.txt
+
+# Run Simulation
+python -m ProducerConsumer.main --items 50 --capacity 5 --producers 2 --consumers 2
+
+# Run Tests
+python -m pytest tests
 ```
 
-### 3. Run the Simulation
+*For detailed documentation and screenshots, see `assignment1/README.md`.*
+
+---
+
+## Assignment 2: Sales Data Analysis
+Located in `assignment2`. A Java application demonstrating functional programming and stream processing on CSV data.
+
+### Overview
+*   **Tech Stack**: Java 17+, Maven, JUnit 5.
+*   **Key Concepts**: Java Records, Stream API (`map`, `reduce`, `collect`), Aggregation.
+*   **Data**: Analyzes a dataset of 20,000+ sales records.
+
+### Replication Steps
+
+#### Option 1: Using Maven (Recommended)
+Builds the project, runs unit tests, and executes the analysis.
 ```bash
-python -m ProducerConsumer.main --items 100 --capacity 10
+cd assignment2
+mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main"
 ```
-- Use `--items` to control how many work items the producer generates.
-- Use `--capacity` to set the bounded buffer size.
-- Omitting the flags launches interactive mode and prompts for both values.
-
-### 4. Run Tests
+*To run with a specific chunk size (e.g., 1000):*
 ```bash
-python -m pytest tests -q
+mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main" "-Dexec.args=1000"
 ```
 
-View screenshots in the Results Folder
-For deeper documentation, see README files in each folders.
+#### Option 2: Using Docker (Zero Dependencies)
+Runs the application in an isolated container environment.
+```bash
+cd assignment2
 
+# Build Image (Runs tests automatically)
+docker build -t sales-analyzer .
+
+# Run Container
+docker run --rm sales-analyzer
+```
+
+#### Option 3: Manual Run (No Maven)
+If Maven is not installed, compile and run using the provided manual test script.
+```bash
+cd assignment2
+javac -d bin src/main/java/com/assignment2/*.java src/test/java/com/assignment2/ManualTest.java
+java -cp bin com.assignment2.ManualTest
+```
+
+*For design choices and full output samples, see `assignment2/README.md`.*
+
+---
+
+## Testing Strategies
+
+### Assignment 1: Python Testing Suite (Pytest)
+| Category | Description | Key Test Cases |
+| :--- | :--- | :--- |
+| **Functional** | Verifies core Producer-Consumer logic. | `test_basic_production_consumption` |
+| **Concurrency** | Checks for race conditions and deadlocks. | `test_thread_safety`, `test_timeout` |
+| **Data Integrity** | Ensures no items are lost or duplicated. | `test_sequence_ordering` |
+| **Edge Cases** | Validates system stability under stress. | `test_zero_capacity`, `test_negative_input` |
+
+### Assignment 2: Java Testing Suite (JUnit 5 & Manual)
+| Method | Tool | Purpose |
+| :--- | :--- | :--- |
+| **Unit Testing** | **JUnit 5** | Verifies mathematical correctness of Stream aggregations (Sum, Avg, Grouping) using controlled mock data. |
+| **Integration** | **Docker** | Builds and tests the entire application in an isolated container environment. |
+| **Manual Verification** | **Script** | `ManualTest.java` runs a dependency-free health check of core logic without Maven. |
+
+---
+
+## Continuous Integration (CI)
+
+The repository is configured with a **GitHub Actions** pipeline to ensure code quality on every push.
+
+*   **Python Workflow**:
+    *   Sets up Python 3.11 environment.
+    *   Installs dependencies (`requirements.txt`).
+    *   Runs the full `pytest` suite.
+*   **Java Workflow**:
+    *   Sets up JDK 17 environment.
+    *   Runs `mvn clean test` to verify compilation and unit tests.
+*   **Status**: ✅ Builds pass automatically on pull requests.
+
+---
+
+## Project Structure
+
+```text
+projectIntuit/
+├── README.md                               # This file
+├── assignment1/                            # Python Producer-Consumer Solution
+│   ├── ProducerConsumer/
+│   │   ├── main.py                         # Entry point for the CLI simulation
+│   │   ├── core.py                         # Buffer logic (Producer, Consumer, BoundedBuffer classes)
+│   │   ├── models.py                       # Data classes (WorkItem)
+│   │   └── cli.py                          # Argument parsing logic
+│   ├── tests/                              # Pytest suite (concurrency, edge cases, integration)
+│   └── requirements.txt                    # Python dependencies (pytest)
+│
+└── assignment2/                            # Java Sales Analysis Solution
+    ├── src/
+    │   ├── main/java/com/assignment2/
+    │   │   ├── Main.java                   # Entry point (CLI arguments, reporting)
+    │   │   ├── SalesAnalyzer.java          # Core logic (Streams, Chunking, Aggregation)
+    │   │   └── Sale.java                   # Immutable Data Model (Java Record)
+    │   └── resources/
+    │       └── sales_data.csv              # Dataset (20,000 rows)
+    ├── src/test/java/com/assignment2/
+    │   ├── SalesAnalyzerTest.java          # JUnit 5 Unit Tests
+    │   └── ManualTest.java                 # Zero-dependency script for manual verification
+    ├── pom.xml                             # Maven build configuration
+    └── Dockerfile                          # Container definition for build/test/run
+```
