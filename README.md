@@ -1,6 +1,6 @@
 # Intuit Build Challenge
 
-This repository contains solutions for the Intuit Build Challenge assignments.
+This repository contains my original contributions for the 2 assignment questions in the Build Challenge (see instructions pdf in root folder)
 
 ---
 
@@ -13,7 +13,7 @@ Located in `assignment1/ProducerConsumer`. Implements a thread-safe bounded buff
 *   **Configurable Items**: Set the total number of items to produce (`--items`).
 *   **Configurable Capacity**: Set the size of the bounded buffer (`--capacity`).
 *   **Interactive Mode**: Prompts user for inputs if flags are omitted.
-*   **Thread Safety**: Uses `threading.Lock` and `Condition` variables.
+*   **Thread Safety**: Uses `threading.Lock` plus the `queue.Queue` condition variables to protect critical sections.
 
 #### Version 2 (New Features)
 *   **Multi-Producer/Consumer**: Support for multiple concurrent producer and consumer threads.
@@ -21,6 +21,10 @@ Located in `assignment1/ProducerConsumer`. Implements a thread-safe bounded buff
     *   `--producers N`: Set number of producer threads.
     *   `--consumers N`: Set number of consumer threads.
 *   **Enhanced Logging**: Tracks thread IDs to visualize concurrency.
+
+#### Version 2.1 (Latest)
+*   **Save Output Logs**: Use `--save-logs` or answer “y” when prompted to store simulation logs under `simulation_logs/YYYY/MM/DD.txt`.
+*   **Expanded Test Coverage**: Added dedicated tests for log persistence and tightened concurrency edge-case coverage.
 
 ### Quick Start
 ```bash
@@ -77,14 +81,6 @@ docker build -t sales-analyzer .
 
 # Run Container
 docker run --rm sales-analyzer
-```
-
-#### Option 3: Manual Run (No Maven)
-If Maven is not installed, compile and run using the provided manual test script.
-```bash
-cd assignment2
-javac -d bin src/main/java/com/assignment2/*.java src/test/java/com/assignment2/ManualTest.java
-java -cp bin com.assignment2.ManualTest
 ```
 
 *For design choices and full output samples, see `assignment2/README.md`.*

@@ -45,7 +45,9 @@ class Producer(threading.Thread):
             buffer_before = buffer_after - 1  # Derive the before-state while we hold the slot
             # Pad single-digit IDs for nicer log alignment
             spacing = "   " if item_id < 10 else "  "
-            self.logger.info(f"Produced {item}{spacing}|  Buffer: {buffer_before} -> {buffer_after}")
+            self.logger.info(
+                f"Produced WorkItem(id={item.item_id}){spacing}|  Buffer: {buffer_before} -> {buffer_after}"
+            )
         
         self.logger.info("Finished production")
         # STOP signals are injected by the manager once every producer is done
@@ -79,7 +81,9 @@ class Consumer(threading.Thread):
             self.local_destination.append(item)
             # Pad single-digit IDs for nicer log alignment
             spacing = "   " if item.item_id < 10 else "  "
-            self.logger.info(f"Consumed {item}{spacing}|  Buffer: {buffer_before} -> {buffer_after}")
+            self.logger.info(
+                f"Consumed WorkItem(id={item.item_id}){spacing}|  Buffer: {buffer_before} -> {buffer_after}"
+            )
             self.shared_queue.task_done()
 
 class SimulationManager:

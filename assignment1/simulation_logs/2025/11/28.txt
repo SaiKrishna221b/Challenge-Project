@@ -1,0 +1,69 @@
+[MainThread] - INFO - Starting simulation with 30 items, capacity 3, 2 producers, 2 consumers
+[Producer-1] - INFO - Starting
+[Producer-1] - INFO - Produced WorkItem(id=1)   |  Buffer: 0 -> 1
+[Producer-1] - INFO - Produced WorkItem(id=2)   |  Buffer: 1 -> 2
+[Producer-1] - INFO - Produced WorkItem(id=3)   |  Buffer: 2 -> 3
+[Producer-2] - INFO - Starting
+[Consumer-1] - INFO - Starting
+[Consumer-1] - INFO - Consumed WorkItem(id=1)   |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=2)   |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=3)   |  Buffer: 1 -> 0
+[Producer-1] - INFO - Produced WorkItem(id=4)   |  Buffer: 0 -> 1
+[Producer-1] - INFO - Produced WorkItem(id=5)   |  Buffer: 1 -> 2
+[Producer-1] - INFO - Produced WorkItem(id=6)   |  Buffer: 2 -> 3
+[Consumer-2] - INFO - Starting
+[Consumer-2] - INFO - Consumed WorkItem(id=4)   |  Buffer: 3 -> 2
+[Consumer-2] - INFO - Consumed WorkItem(id=5)   |  Buffer: 2 -> 1
+[Consumer-2] - INFO - Consumed WorkItem(id=6)   |  Buffer: 1 -> 0
+[Producer-1] - INFO - Produced WorkItem(id=7)   |  Buffer: 0 -> 1
+[Producer-1] - INFO - Produced WorkItem(id=8)   |  Buffer: 1 -> 2
+[Producer-1] - INFO - Produced WorkItem(id=9)   |  Buffer: 2 -> 3
+[Consumer-2] - INFO - Consumed WorkItem(id=7)   |  Buffer: 3 -> 2
+[Consumer-2] - INFO - Consumed WorkItem(id=8)   |  Buffer: 2 -> 1
+[Consumer-2] - INFO - Consumed WorkItem(id=9)   |  Buffer: 1 -> 0
+[Producer-1] - INFO - Produced WorkItem(id=10)  |  Buffer: 0 -> 1
+[Producer-1] - INFO - Produced WorkItem(id=11)  |  Buffer: 1 -> 2
+[Producer-1] - INFO - Produced WorkItem(id=12)  |  Buffer: 2 -> 3
+[Consumer-2] - INFO - Consumed WorkItem(id=10)  |  Buffer: 3 -> 2
+[Consumer-2] - INFO - Consumed WorkItem(id=11)  |  Buffer: 2 -> 1
+[Consumer-2] - INFO - Consumed WorkItem(id=12)  |  Buffer: 1 -> 0
+[Producer-1] - INFO - Produced WorkItem(id=13)  |  Buffer: 0 -> 1
+[Producer-1] - INFO - Produced WorkItem(id=14)  |  Buffer: 1 -> 2
+[Producer-1] - INFO - Produced WorkItem(id=15)  |  Buffer: 2 -> 3
+[Producer-1] - INFO - Finished production
+[Consumer-1] - INFO - Consumed WorkItem(id=13)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=14)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=15)  |  Buffer: 1 -> 0
+[Producer-2] - INFO - Produced WorkItem(id=16)  |  Buffer: 0 -> 1
+[Producer-2] - INFO - Produced WorkItem(id=17)  |  Buffer: 1 -> 2
+[Producer-2] - INFO - Produced WorkItem(id=18)  |  Buffer: 2 -> 3
+[Consumer-1] - INFO - Consumed WorkItem(id=16)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=17)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=18)  |  Buffer: 1 -> 0
+[Producer-2] - INFO - Produced WorkItem(id=19)  |  Buffer: 0 -> 1
+[Producer-2] - INFO - Produced WorkItem(id=20)  |  Buffer: 1 -> 2
+[Producer-2] - INFO - Produced WorkItem(id=21)  |  Buffer: 2 -> 3
+[Consumer-1] - INFO - Consumed WorkItem(id=19)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=20)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=21)  |  Buffer: 1 -> 0
+[Producer-2] - INFO - Produced WorkItem(id=22)  |  Buffer: 0 -> 1
+[Producer-2] - INFO - Produced WorkItem(id=23)  |  Buffer: 1 -> 2
+[Producer-2] - INFO - Produced WorkItem(id=24)  |  Buffer: 2 -> 3
+[Consumer-1] - INFO - Consumed WorkItem(id=22)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=23)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=24)  |  Buffer: 1 -> 0
+[Producer-2] - INFO - Produced WorkItem(id=25)  |  Buffer: 0 -> 1
+[Producer-2] - INFO - Produced WorkItem(id=26)  |  Buffer: 1 -> 2
+[Producer-2] - INFO - Produced WorkItem(id=27)  |  Buffer: 2 -> 3
+[Consumer-1] - INFO - Consumed WorkItem(id=25)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=26)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=27)  |  Buffer: 1 -> 0
+[Producer-2] - INFO - Produced WorkItem(id=28)  |  Buffer: 0 -> 1
+[Producer-2] - INFO - Produced WorkItem(id=29)  |  Buffer: 1 -> 2
+[Producer-2] - INFO - Produced WorkItem(id=30)  |  Buffer: 2 -> 3
+[Producer-2] - INFO - Finished production
+[Consumer-1] - INFO - Consumed WorkItem(id=28)  |  Buffer: 3 -> 2
+[Consumer-1] - INFO - Consumed WorkItem(id=29)  |  Buffer: 2 -> 1
+[Consumer-1] - INFO - Consumed WorkItem(id=30)  |  Buffer: 1 -> 0
+[Consumer-1] - INFO - Received STOP_SIGNAL. Quitting.  |  Buffer: 2 -> 1
+[Consumer-2] - INFO - Received STOP_SIGNAL. Quitting.  |  Buffer: 1 -> 0

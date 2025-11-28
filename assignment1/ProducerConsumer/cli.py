@@ -2,7 +2,9 @@
 
 import argparse
 import logging
+import os
 import sys
+from datetime import datetime
 from .core import SimulationManager
 from .utils import setup_logging
 
@@ -20,6 +22,7 @@ def parse_args():
     parser.add_argument("--capacity", type=int, help="Capacity of the shared queue (allowed range: 1-10000)")
     parser.add_argument("--producers", type=int, help="Number of producer threads (allowed range: 1-100)")
     parser.add_argument("--consumers", type=int, help="Number of consumer threads (allowed range: 1-100)")
+    parser.add_argument("--save-logs", action="store_true", help="Automatically save simulation logs to a dated .txt file")
     return parser.parse_args()
 
 def get_valid_input(prompt: str, min_value: int = 1, max_value: int = None) -> int:
@@ -65,6 +68,39 @@ def display_timestamp_ordered_logs(log_handler) -> None:
     formatter = logging.Formatter("[%(threadName)s] - %(levelname)s - %(message)s")
     for record in sorted_logs:
         print(formatter.format(record))
+
+
+def maybe_save_logs(log_handler, *, auto_save: bool = False) -> None:
+    """Persist the current log stream to disk if requested."""
+    if not auto_save and not sys.stdin.isatty():
+        return
+
+    if not auto_save:
+        try:
+            response = input("\nDo you want to save this simulation log? (y/n): ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\nSkipping save request.")
+            return
+
+        if response not in ("y", "yes"):
+            return
+
+    logs_dir = os.path.join(os.getcwd(), "simulation_logs")
+    os.makedirs(logs_dir, exist_ok=True)
+
+    now = datetime.now()
+    dated_dir = os.path.join(logs_dir, str(now.year).zfill(4), str(now.month).zfill(2))
+    os.makedirs(dated_dir, exist_ok=True)
+
+    filename = f"{now.day:02d}.txt"
+    filepath = os.path.join(dated_dir, filename)
+
+    formatter = logging.Formatter("[%(threadName)s] - %(levelname)s - %(message)s")
+    with open(filepath, "w", encoding="utf-8") as logfile:
+        for record in log_handler.get_sorted_logs():
+            logfile.write(formatter.format(record) + os.linesep)
+
+    print(f"File stored successfully in folder {dated_dir}")
 
 def run_simulation():
     """Run a single simulation iteration."""
@@ -168,6 +204,8 @@ def run_simulation():
     else:
         print("FAILURE: Item count mismatch!")
         logger.warning(f"Item count mismatch: expected {n_items}, got {len(results)}")
+
+    maybe_save_logs(log_handler, auto_save=args.save_logs)
     
     return True
 
