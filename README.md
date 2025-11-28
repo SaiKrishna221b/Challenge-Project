@@ -1,6 +1,6 @@
 # Intuit Build Challenge
 
-This repository contains my solutions for the Intuit Build Challenge.
+This repository contains my original solutions for the Intuit Build Challenge. 
 
 ### Quick Links
 *   [Replication Steps](#quick-start-guide)
@@ -12,9 +12,6 @@ This repository contains my solutions for the Intuit Build Challenge.
 
 ## Assignment 1: Producer-Consumer Pattern
 **Path:** `assignment1/ProducerConsumer`
-
-A robust, thread-safe implementation of the classic synchronization problem, evolved through multiple iterations.
-
 ### Version History
 
 #### **v1.0: The Core Implementation**
