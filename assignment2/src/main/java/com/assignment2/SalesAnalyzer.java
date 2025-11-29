@@ -219,9 +219,17 @@ public class SalesAnalyzer {
         
         // Accumulators for Global State
         double globalTotalRevenue = 0;
-        Map<String, Long> globalRegionCounts = new HashMap<>();
+        Map<String, Double> categoryRevenue = new HashMap<>();
+        Map<String, Long> regionCounts = new HashMap<>();
+        Map<String, Integer> productQuantity = new HashMap<>();
+        Map<String, DoubleSummaryStatistics> categoryTotalStats = new HashMap<>();
+        Map<String, DoubleSummaryStatistics> categoryPriceStats = new HashMap<>();
+        Map<String, Double> monthlyTrend = new HashMap<>();
+        Sale highestValueOrder = null;
+
         int totalChunks = 0;
         int failedChunks = 0;
+        int totalRecords = 0;
         
         try (InputStream is = SalesAnalyzer.class.getClassLoader().getResourceAsStream(filename)) {
             if (is == null) throw new IOException("File not found: " + filename);
@@ -239,10 +247,33 @@ public class SalesAnalyzer {
                     batch.add(parseLine(line));
                     
                     if (batch.size() >= chunkSize) {
-                        boolean success = processBatchWithRetry(batch, chunkId, globalTotalRevenue, globalRegionCounts);
-                        if (success) {
+                        if (processBatchWithRetry(batch, chunkId)) {
+                            totalRecords += batch.size();
+                            
+                            // Aggregate Batch Results into Global State
                             globalTotalRevenue += batch.stream().mapToDouble(Sale::getTotalAmount).sum();
-                            batch.forEach(s -> globalRegionCounts.merge(s.region(), 1L, Long::sum));
+                            
+                            batch.forEach(s -> {
+                                categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
+                                regionCounts.merge(s.region(), 1L, Long::sum);
+                                productQuantity.merge(s.product(), s.quantity(), Integer::sum);
+                                monthlyTrend.merge(s.date().getYear() + "-" + String.format("%02d", s.date().getMonthValue()), s.getTotalAmount(), Double::sum);
+                                
+                                // Category Statistics (Total Amount)
+                                categoryTotalStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.getTotalAmount());
+                                
+                                // Category Statistics (Unit Price for Average)
+                                categoryPriceStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.unitPrice());
+                            });
+
+                            // Track Highest Order
+                            Optional<Sale> batchHigh = batch.stream().max(Comparator.comparingDouble(Sale::getTotalAmount));
+                            if (batchHigh.isPresent()) {
+                                if (highestValueOrder == null || batchHigh.get().getTotalAmount() > highestValueOrder.getTotalAmount()) {
+                                    highestValueOrder = batchHigh.get();
+                                }
+                            }
+
                         } else {
                             failedChunks++;
                         }
@@ -254,10 +285,26 @@ public class SalesAnalyzer {
                 
                 // Process remaining
                 if (!batch.isEmpty()) {
-                     boolean success = processBatchWithRetry(batch, chunkId, globalTotalRevenue, globalRegionCounts);
-                     if (success) {
+                     if (processBatchWithRetry(batch, chunkId)) {
+                         totalRecords += batch.size();
+                         // Aggregate Remaining Batch
                          globalTotalRevenue += batch.stream().mapToDouble(Sale::getTotalAmount).sum();
-                         batch.forEach(s -> globalRegionCounts.merge(s.region(), 1L, Long::sum));
+                            
+                         batch.forEach(s -> {
+                             categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
+                             regionCounts.merge(s.region(), 1L, Long::sum);
+                             productQuantity.merge(s.product(), s.quantity(), Integer::sum);
+                             monthlyTrend.merge(s.date().getYear() + "-" + String.format("%02d", s.date().getMonthValue()), s.getTotalAmount(), Double::sum);
+                             categoryTotalStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.getTotalAmount());
+                             categoryPriceStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.unitPrice());
+                         });
+
+                         Optional<Sale> batchHigh = batch.stream().max(Comparator.comparingDouble(Sale::getTotalAmount));
+                         if (batchHigh.isPresent()) {
+                             if (highestValueOrder == null || batchHigh.get().getTotalAmount() > highestValueOrder.getTotalAmount()) {
+                                 highestValueOrder = batchHigh.get();
+                             }
+                         }
                      } else {
                          failedChunks++;
                      }
@@ -269,18 +316,67 @@ public class SalesAnalyzer {
         System.out.println("\n--- Processing Summary ---");
         if (failedChunks == 0) {
             System.out.println("Status: SUCCESS");
-            System.out.println("Processed " + totalChunks + " chunks without error.");
+            System.out.println("Processed " + totalChunks + " chunks (" + totalRecords + " records) without error.");
         } else {
             System.err.println("Status: PARTIAL FAILURE");
             System.err.println("Processed " + totalChunks + " chunks. Failed: " + failedChunks);
         }
 
-        System.out.println("\n--- Final Aggregated Results ---");
-        System.out.printf("Global Total Revenue: $%.2f%n", globalTotalRevenue);
-        System.out.println("Global Region Counts: " + globalRegionCounts);
+        System.out.println("\n=====================================");
+        System.out.println("       SALES DATA ANALYSIS");
+        System.out.println("=====================================");
+
+        // 1. Total Sales
+        System.out.println("\n1. Total Sales Revenue:");
+        System.out.printf("   $%.2f%n", globalTotalRevenue);
+
+        // 2. Sales by Category
+        System.out.println("\n2. Total Sales by Category:");
+        categoryRevenue.forEach((category, revenue) -> 
+            System.out.printf("   %s: $%.2f%n", category, revenue));
+
+        // 3. Top Product
+        System.out.println("\n3. Top Selling Product (by Quantity):");
+        productQuantity.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .ifPresent(entry -> System.out.println("   " + entry.getKey() + " (" + entry.getValue() + " units)"));
+
+        // 4. Region Count
+        System.out.println("\n4. Orders by Region:");
+        regionCounts.forEach((region, count) -> 
+            System.out.println("   " + region + ": " + count + " orders"));
+
+        // 5. Average Sales (Unit Price)
+        System.out.println("\n5. Average Unit Price by Category:");
+        categoryPriceStats.forEach((category, stats) -> 
+            System.out.printf("   %s: $%.2f%n", category, stats.getAverage()));
+
+        // 6. Highest Order
+        System.out.println("\n6. Highest Value Order:");
+        if (highestValueOrder != null) {
+            System.out.printf("   ID: %s | Product: %s | Amount: $%.2f%n", 
+                highestValueOrder.transactionId(), highestValueOrder.product(), highestValueOrder.getTotalAmount());
+        }
+
+        // 7. Advanced Statistics
+        System.out.println("\n7. Detailed Statistics by Category:");
+        categoryTotalStats.forEach((category, stats) -> {
+            System.out.println("   " + category + ":");
+            System.out.printf("      Count: %d, Min: $%.2f, Max: $%.2f, Avg: $%.2f%n", 
+                stats.getCount(), stats.getMin(), stats.getMax(), stats.getAverage());
+        });
+
+        // 8. Monthly Trend
+        System.out.println("\n8. Monthly Sales Trend:");
+        monthlyTrend.forEach((month, total) -> 
+            System.out.printf("   %s: $%.2f%n", month, total));
+
+        System.out.println("\n=============================================");
+        System.out.println("          END OF SALES REPORT");
+        System.out.println("=============================================");
     }
 
-    private static boolean processBatchWithRetry(List<Sale> batch, int chunkId, double currentRev, Map<String, Long> currentRegions) {
+    private static boolean processBatchWithRetry(List<Sale> batch, int chunkId) {
         int retries = 3;
         while (retries > 0) {
             try {
