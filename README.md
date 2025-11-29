@@ -5,6 +5,8 @@ This repository contains my original solutions for the Intuit Build Challenge.
 ### Quick Links
 *   [Replication Steps](#quick-start-guide)
 *   [Project Structure](#project-structure)
+*   [Design Decisions: Assignment 1](assignment1/DesignDecisions.md)
+*   [Design Decisions: Assignment 2](assignment2/DesignDecisions.md)
 *   [Results: Producer Consumer v2.1](#assignment-1-results-v21)
 *   [Results: Sales Analyzer v2.0](#assignment-2-results-v20)
 
@@ -69,16 +71,21 @@ cd assignment1
 pip install -r requirements.txt
 # Run the full multi-threaded simulation
 python -m ProducerConsumer.main --items 50 --capacity 5 --producers 2 --consumers 2
+
+# Docker Build & Run
+docker build -t assignment1-python .
+docker run -it assignment1-python
 ```
 
 ### Assignment 2 (Java)
 ```bash
 cd assignment2
-# Build and Run using Maven
+# Interactive Mode (Select Standard or Batch Processing)
 mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main"
 
-# OR Run the Advanced Chunking Engine (Batch Size 1000)
-mvn clean compile exec:java "-Dexec.mainClass=com.assignment2.Main" "-Dexec.args=1000"
+# Docker Build & Run
+docker build -t assignment2-java .
+docker run assignment2-java
 ```
 
 ---
@@ -148,8 +155,8 @@ projectIntuit/
 
 Here are the execution results from the **Producer-Consumer v2.1** implementation (Dockerized, Multi-threaded).
 
-![Producer Consumer Output 1](Results/ProducerConsumer%20v2.1/prodConsumer%20v2.1%20ss01.png)
-![Producer Consumer Output 2](Results/ProducerConsumer%20v2.1/prodConsumer%20v2.1%20ss02.png)
+![Producer Consumer Output 1](Results/ProducerConsumer%20v2.1/v2.1%20ss1.png)
+![Producer Consumer Output 2](Results/ProducerConsumer%20v2.1/v2.1%20ss2.png)
 
 ---
 
@@ -157,8 +164,8 @@ Here are the execution results from the **Producer-Consumer v2.1** implementatio
 
 Here are the execution results from the **Sales Analyzer v2.0** (Java Streams, Large Dataset).
 
-![Sales Analyzer Output 1](Results/SalesAnalyzer%20v2/SalesAnalysis%20v2%20ss01.png)
-![Sales Analyzer Output 2](Results/SalesAnalyzer%20v2/SalesAnalysis%20v2%20ss02.png)
+![Sales Analyzer Output 1](Results/SalesAnalyzer%20v2/v2%20ss1.png)
+![Sales Analyzer Output 2](Results/SalesAnalyzer%20v2/v2%20ss2.png)
 
 <details>
 <summary>Click to see full text output</summary>
