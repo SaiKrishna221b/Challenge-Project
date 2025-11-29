@@ -151,6 +151,29 @@ projectIntuit/
 
 ---
 
+## Deliverables & Implementation
+
+### Assignment 1: Producer-Consumer (Python)
+| Requirement | Implementation File | Method / Strategy |
+| :--- | :--- | :--- |
+| **Complete Source Code** | `assignment1/ProducerConsumer/` | Core logic in `core.py`, CLI in `cli.py` |
+| **Unit Tests** | `assignment1/tests/` | Full Pytest suite covering concurrency & data integrity |
+| **Console Output** | `main.py` | Real-time logging to stdout + saved log files |
+| **Thread Safety** | `core.py` | Uses `queue.Queue` (Condition/Lock based) |
+
+### Assignment 2: Sales Analysis (Java)
+| Requirement | Implementation File | Method / Strategy |
+| :--- | :--- | :--- |
+| **Complete Source Code** | `assignment2/src/main/java/` | `SalesAnalyzer.java`, `Sale.java` (Record), `Main.java` |
+| **Unit Tests** | `assignment2/src/test/java/` | `SalesAnalyzerTest.java` (JUnit 5), `ChunkingTest.java` |
+| **Functional Programming** | `SalesAnalyzer.java` | Pure functions, Immutability (`record Sale`) |
+| **Stream Operations** | `SalesAnalyzer.java` | `.map()`, `.filter()`, `.reduce()`, `.collect()` pipelines |
+| **Lambda Expressions** | `SalesAnalyzer.java` | `sale -> sale.getTotalAmount() >= threshold` |
+| **Data Aggregation** | `SalesAnalyzer.java` | `Collectors.groupingBy`, `summarizingDouble`, `partitioningBy` |
+| **EXTRA: Scalability** | `SalesAnalyzer.java` | **Chunking Engine**: Process infinite file sizes in O(1) memory |
+
+---
+
 ## Assignment 1 Results (v2.1)
 
 Here are the execution results from the **Producer-Consumer v2.1** implementation (Dockerized, Multi-threaded).
