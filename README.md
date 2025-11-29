@@ -8,7 +8,7 @@ This repository contains my original solutions for the Intuit Build Challenge.
 *   [Design Decisions: Assignment 1](assignment1/DesignDecisions.md)
 *   [Design Decisions: Assignment 2](assignment2/DesignDecisions.md)
 *   [Results: Producer Consumer v2.1](#assignment-1-results-v21)
-*   [Results: Sales Analyzer v2.0](#assignment-2-results-v20)
+*   [Results: Sales Analyzer v3.0](#assignment-2-results-v30)
 
 ---
 
@@ -59,7 +59,14 @@ A high-performance data analysis tool leveraging Java Streams and Functional Pro
 *   **Scale Architecture**:
     *   **Chunk Processing Engine**: Implemented a lazy-loading batch processor to handle datasets larger than RAM (verified with 20,000+ rows).
     *   **Fault Tolerance**: Built-in retry logic for failed chunks.
-  
+
+#### **v3.0: Parity & Polish**
+*   **More Insights**: Added advanced aggregation metrics including:
+    *   **Revenue Share**: Percentage of global revenue per region.
+    *   **Unique Product Lists**: Distinct products sold per category.
+    *   **Top N Ranking**: Flexible ranking by Revenue (not just Quantity).
+*   **Interactive CLI**: Added a user-friendly menu to select between Standard and Scalable modes.
+*   **Unified Reporting**: Ensured the Chunking Engine produces the exact same high-fidelity report as the Standard engine.
 
 ---
 
@@ -183,12 +190,13 @@ Here are the execution results from the **Producer-Consumer v2.1** implementatio
 
 ---
 
-## Assignment 2 Results (v2.0)
+## Assignment 2 Results (v3.0)
 
-Here are the execution results from the **Sales Analyzer v2.0** (Java Streams, Large Dataset).
+Here are the execution results from the **Sales Analyzer v3.0** (Java Streams, Large Dataset).
 
-![Sales Analyzer Output 1](Results/SalesAnalyzer%20v2/v2%20ss1.png)
-![Sales Analyzer Output 2](Results/SalesAnalyzer%20v2/v2%20ss2.png)
+![Sales Analyzer Output 1](Results/SalesAnalyzer%20v3/v3%20ss1.png)
+![Sales Analyzer Output 2](Results/SalesAnalyzer%20v3/v3%20ss2.png)
+![Sales Analyzer Output 3](Results/SalesAnalyzer%20v3/v3%20ss3.png)
 
 <details>
 <summary>Click to see full text output</summary>
@@ -208,37 +216,53 @@ Loaded 20000 sales records.
    Clothing: $22,685,861.13
    Electronics: $22,412,091.25
    Books: $21,924,422.47
-   Home: $21,660,219.72
-   Sports: $21,725,369.68
+   ...
 
 3. Top Selling Product (by Quantity):
    Hat (4638 units)
 
-4. Orders by Region:
-   West: 5042 orders
-   South: 5015 orders
-   North: 4953 orders
-   East: 4990 orders
+4. Top 5 Products (by Revenue):
+   Mouse: $4,709,488.86
+   Socks: $4,690,871.48
+   Hat: $4,617,463.77
+   ...
 
-5. Average Unit Price by Category:
+5. Regional Analysis:
+   Order Counts:
+      West: 5042
+      South: 5015
+   Average Order Value:
+      West: $5,489.81
+      South: $5,507.06
+   Revenue Share (%):
+      West: 25.07%
+      South: 25.01%
+
+6. Average Unit Price by Category:
    Clothing: $1006.63
    Electronics: $1011.01
-   Books: $999.52
-   Home: $1001.55
-   Sports: $1004.16
+   ...
 
-6. Highest Value Order:
+7. Highest Value Order:
    ID: T07864 | Product: Monitor | Amount: $19990.70
 
-7. Detailed Statistics by Category:
+8. Detailed Statistics by Category:
    Clothing:
       Count: 4062, Min: $20.05, Max: $19985.10, Avg: $5584.90
-   ... (truncated for brevity)
+   ...
 
-8. Monthly Sales Trend:
+9. Unique Products per Category:
+   Clothing: [Jacket, T-Shirt, Jeans, Hat, Socks]
+   Electronics: [Headphones, Laptop, Monitor, Mouse, Keyboard]
+   ...
+
+10. Monthly Sales Trend:
    2024-01: $9,494,647.62
    2024-02: $8,408,740.30
-   ... (truncated for brevity)
+   ...
+
+11. Yearly Sales:
+   2024: $110,407,964.25
 
 =============================================
           END OF SALES REPORT

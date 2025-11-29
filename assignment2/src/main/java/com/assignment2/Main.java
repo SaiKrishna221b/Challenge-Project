@@ -83,39 +83,69 @@ public class Main {
         analyzer.getSalesByCategory().forEach((category, revenue) -> 
             System.out.printf("   %s: $%.2f%n", category, revenue));
 
-        // 3. Top Product
+        // 3. Top Product (Quantity)
         System.out.println("\n3. Top Selling Product (by Quantity):");
         analyzer.getTopProductByQuantity().ifPresent(entry -> 
             System.out.println("   " + entry.getKey() + " (" + entry.getValue() + " units)"));
 
-        // 4. Region Count
-        System.out.println("\n4. Orders by Region:");
-        analyzer.getOrderCountByRegion().forEach((region, count) -> 
-            System.out.println("   " + region + ": " + count + " orders"));
+        // 4. Top 5 Products (Revenue) [NEW]
+        System.out.println("\n4. Top 5 Products (by Revenue):");
+        analyzer.getTopProductsByRevenue(5).forEach(entry -> 
+            System.out.printf("   %s: $%.2f%n", entry.getKey(), entry.getValue()));
 
-        // 5. Average Sales
-        System.out.println("\n5. Average Unit Price by Category:");
+        // 5. Region Analysis (Count & Average) [ENHANCED]
+        System.out.println("\n5. Regional Analysis:");
+        System.out.println("   Order Counts:");
+        analyzer.getOrderCountByRegion().forEach((region, count) -> 
+            System.out.println("      " + region + ": " + count));
+        
+        System.out.println("   Average Order Value:");
+        analyzer.getAverageSalesByRegion().forEach((region, avg) -> 
+            System.out.printf("      %s: $%.2f%n", region, avg));
+
+        // 6. Revenue Percentage by Region [NEW]
+        System.out.println("   Revenue Share (%):");
+        analyzer.getRevenuePercentageByRegion().forEach((region, pct) -> 
+            System.out.printf("      %s: %.2f%%%n", region, pct));
+
+        // 7. Unique Products by Region [NEW]
+        System.out.println("   Distinct Products Sold:");
+        analyzer.getDistinctProductCountByRegion().forEach((region, count) -> 
+            System.out.println("      " + region + ": " + count));
+
+        // 8. Average Sales (Category)
+        System.out.println("\n6. Average Unit Price by Category:");
         analyzer.getAverageSalesByCategory().forEach((category, avgPrice) -> 
             System.out.printf("   %s: $%.2f%n", category, avgPrice));
 
-        // 6. Highest Order
-        System.out.println("\n6. Highest Value Order:");
+        // 9. Highest Order
+        System.out.println("\n7. Highest Value Order:");
         analyzer.getHighestValueOrder().ifPresent(sale -> 
             System.out.printf("   ID: %s | Product: %s | Amount: $%.2f%n", 
                 sale.transactionId(), sale.product(), sale.getTotalAmount()));
 
-        // 7. Advanced Statistics
-        System.out.println("\n7. Detailed Statistics by Category:");
+        // 10. Advanced Statistics
+        System.out.println("\n8. Detailed Statistics by Category:");
         analyzer.getSalesStatisticsByCategory().forEach((category, stats) -> {
             System.out.println("   " + category + ":");
             System.out.printf("      Count: %d, Min: $%.2f, Max: $%.2f, Avg: $%.2f%n", 
                 stats.getCount(), stats.getMin(), stats.getMax(), stats.getAverage());
         });
+        
+        // 11. Unique Products List [NEW]
+        System.out.println("\n9. Unique Products per Category:");
+        analyzer.getUniqueProductsByCategory().forEach((category, products) -> 
+            System.out.println("   " + category + ": " + products));
 
-        // 8. Monthly Trend
-        System.out.println("\n8. Monthly Sales Trend:");
+        // 12. Monthly Trend
+        System.out.println("\n10. Monthly Sales Trend:");
         analyzer.getMonthlySalesTrend().forEach((month, total) -> 
             System.out.printf("   %s: $%.2f%n", month, total));
+
+        // 13. Yearly Sales [NEW]
+        System.out.println("\n11. Yearly Sales:");
+        analyzer.getYearlySales().forEach((year, total) -> 
+            System.out.printf("   %d: $%.2f%n", year, total));
 
         System.out.println("\n=============================================");
         System.out.println("          END OF SALES REPORT");

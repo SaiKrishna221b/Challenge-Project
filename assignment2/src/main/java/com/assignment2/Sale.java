@@ -30,5 +30,21 @@ public record Sale(
     public double getTotalAmount() {
         return quantity * unitPrice;
     }
-}
 
+    /**
+     * Helper to extract the Year from the transaction date.
+     * @return The year as an integer (e.g., 2024)
+     */
+    public int getYear() {
+        return date.getYear();
+    }
+
+    /**
+     * Helper to format the date as "YYYY-MM".
+     * Useful for grouping monthly trends.
+     * @return String representation of Year-Month
+     */
+    public String getMonthYear() {
+        return String.format("%d-%02d", date.getYear(), date.getMonthValue());
+    }
+}

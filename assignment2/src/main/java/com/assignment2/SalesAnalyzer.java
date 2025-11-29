@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -102,6 +103,49 @@ public class SalesAnalyzer {
                 ));
     }
 
+    /**
+     * NEW: Calculates the average order value (revenue per transaction) for each region.
+     */
+    public Map<String, Double> getAverageSalesByRegion() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::region,
+                        Collectors.averagingDouble(Sale::getTotalAmount)
+                ));
+    }
+
+    /**
+     * NEW: Calculates the percentage of total revenue contributed by each region.
+     */
+    public Map<String, Double> getRevenuePercentageByRegion() {
+        double totalRevenue = calculateTotalSales();
+        if (totalRevenue == 0) return new HashMap<>();
+
+        Map<String, Double> regionRevenue = sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::region,
+                        Collectors.summingDouble(Sale::getTotalAmount)
+                ));
+        
+        // Convert raw totals to percentages
+        return regionRevenue.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> (e.getValue() / totalRevenue) * 100.0
+                ));
+    }
+
+    /**
+     * NEW: Counts how many distinct product types are sold in each region.
+     */
+    public Map<String, Long> getDistinctProductCountByRegion() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::region,
+                        Collectors.mapping(Sale::product, Collectors.collectingAndThen(Collectors.toSet(), set -> (long) set.size()))
+                ));
+    }
+
     // ==========================================
     // 3. CATEGORY ANALYSIS
     // ==========================================
@@ -139,6 +183,17 @@ public class SalesAnalyzer {
                 ));
     }
 
+    /**
+     * NEW: Returns a set of unique products available in each category.
+     */
+    public Map<String, Set<String>> getUniqueProductsByCategory() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::category,
+                        Collectors.mapping(Sale::product, Collectors.toSet())
+                ));
+    }
+
     // ==========================================
     // 4. PRODUCT ANALYSIS
     // ==========================================
@@ -156,6 +211,22 @@ public class SalesAnalyzer {
                 .max(Map.Entry.comparingByValue());
     }
 
+    /**
+     * NEW: Finds the top N products based on total revenue generated.
+     * @param limit Number of top products to return
+     */
+    public List<Map.Entry<String, Double>> getTopProductsByRevenue(int limit) {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::product,
+                        Collectors.summingDouble(Sale::getTotalAmount)
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
     // ==========================================
     // 5. TEMPORAL ANALYSIS
     // ==========================================
@@ -166,8 +237,20 @@ public class SalesAnalyzer {
     public Map<String, Double> getMonthlySalesTrend() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
-                        sale -> sale.date().getYear() + "-" + String.format("%02d", sale.date().getMonthValue()),
-                        LinkedHashMap::new, // Preserve order
+                        Sale::getMonthYear,
+                        LinkedHashMap::new, // Preserve order if possible (though hash map doesn't guarantee insertion order of keys, dates often sort naturally if processed in order)
+                        Collectors.summingDouble(Sale::getTotalAmount)
+                ));
+        // Note: To guarantee sorted order, we'd normally use a TreeMap, but LinkedHashMap is fine for this scope.
+    }
+
+    /**
+     * NEW: Aggregates sales by Year.
+     */
+    public Map<Integer, Double> getYearlySales() {
+        return sales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::getYear,
                         Collectors.summingDouble(Sale::getTotalAmount)
                 ));
     }
@@ -257,7 +340,7 @@ public class SalesAnalyzer {
                                 categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
                                 regionCounts.merge(s.region(), 1L, Long::sum);
                                 productQuantity.merge(s.product(), s.quantity(), Integer::sum);
-                                monthlyTrend.merge(s.date().getYear() + "-" + String.format("%02d", s.date().getMonthValue()), s.getTotalAmount(), Double::sum);
+                                monthlyTrend.merge(s.getMonthYear(), s.getTotalAmount(), Double::sum);
                                 
                                 // Category Statistics (Total Amount)
                                 categoryTotalStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.getTotalAmount());
@@ -294,7 +377,7 @@ public class SalesAnalyzer {
                              categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
                              regionCounts.merge(s.region(), 1L, Long::sum);
                              productQuantity.merge(s.product(), s.quantity(), Integer::sum);
-                             monthlyTrend.merge(s.date().getYear() + "-" + String.format("%02d", s.date().getMonthValue()), s.getTotalAmount(), Double::sum);
+                             monthlyTrend.merge(s.getMonthYear(), s.getTotalAmount(), Double::sum);
                              categoryTotalStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.getTotalAmount());
                              categoryPriceStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.unitPrice());
                          });
