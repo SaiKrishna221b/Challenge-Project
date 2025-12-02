@@ -1,4 +1,4 @@
-# Intuit Build Challenge
+# Build Challenge
 
 This repository contains my original solutions for the Intuit Build Challenge. 
 
