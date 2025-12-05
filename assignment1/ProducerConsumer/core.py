@@ -1,7 +1,7 @@
 """Concurrent producer-consumer simulation built on top of queue.Queue.
 
 queue.Queue already wraps a lock/condition pair, so we get blocking put/get
-behavior for free. This module layers logging, sequencing, and thread
+behavior. This module layers logging, sequencing, and thread
 coordination so multiple producers and consumers can share the buffer safely.
 """
 
@@ -40,7 +40,8 @@ class Producer(threading.Thread):
                 seq_num = 0  # Fallback path when sequence bookkeeping is disabled
             
             item = WorkItem(item_id, sequence_number=seq_num)
-            self.shared_queue.put(item)  # Blocks automatically when the buffer is full
+            # BLOCKS if full (Internally calls not_full.wait() to release lock)
+            self.shared_queue.put(item)
             buffer_after = self.shared_queue.qsize()
             buffer_before = buffer_after - 1  # Derive the before-state while we hold the slot
             # Pad single-digit IDs for nicer log alignment
@@ -69,7 +70,8 @@ class Consumer(threading.Thread):
         """Drain queue items until the manager posts our STOP signal."""
         self.logger.info("Starting")
         while True:
-            item = self.shared_queue.get()  # Blocks automatically while the buffer is empty
+            # BLOCKS if empty (Internally calls not_empty.wait() to release lock)
+            item = self.shared_queue.get()
             buffer_after = self.shared_queue.qsize()
             buffer_before = buffer_after + 1  # Capture the before-state while we own the slot
             

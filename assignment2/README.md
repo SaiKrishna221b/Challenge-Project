@@ -4,6 +4,20 @@
 This application performs data analysis on a CSV dataset of sales transactions. It demonstrates proficiency with **Java Streams**, **Functional Programming**, and **Data Aggregation** techniques. The program reads a CSV file, parses it into objects, and executes various analytical queries such as calculating total revenue, finding top-selling products, and grouping sales by region and category.
 
 ## Features & Stream Operations
+
+### Data Flow Pipeline
+
+```mermaid
+graph LR
+    A[Raw CSV File] -->|Stream lines| B(Parse & Filter)
+    B -->|Map to Record| C{Processing Mode}
+    C -->|Standard| D[Memory List]
+    C -->|Chunked| E[Batch Accumulator]
+    D -->|Stream API| F[Aggregations]
+    E -->|Iterative Flush| F
+    F -->|Collect| G[Final Reports]
+```
+
 The solution implements the following functional operations:
 *   **Filtering & Mapping**: Parsing raw CSV lines into `Sale` objects (`map`), filtering empty lines.
 *   **Aggregation**: Calculating total sales (`mapToDouble`, `sum`).

@@ -16,20 +16,11 @@ This repository contains my original solutions for the Intuit Build Challenge.
 **Path:** `assignment1/ProducerConsumer`
 ### Version History
 
-#### **v1.0: The Core Implementation**
-*   **Bounded Buffer**: Implemented a thread-safe queue using `threading.Lock` and `Condition` variables through Queue.queue methods.
-*   **Basic Synchronization**: Handled `wait()` and `notify()` logic to prevent race conditions.
-*   **Interactive CLI**: Prompts users for `items` and `capacity` if arguments are missing.
-*   **CI Pipeline**: Automated testing via GitHub Actions.
-
-#### **v2.0: Enhanced Concurrency**
-*   **Multi-Threading Support**: Scaled to support $N$ Producers and $M$ Consumers running simultaneously.
-*   **CLI Arguments**: Added `--producers` and `--consumers` flags for granular control.
-*   **Sequence Tracking**: Implemented global sequence numbering to verify data integrity across threads.
-
-#### **v2.1: DevOps & Robustness**
-*   **Dockerization**: Full container support for isolated execution.
-*   **Structured Logging**: Thread-aware logs for debugging complex interleaving and saved output file.
+| Version | Name | Key Features |
+| :--- | :--- | :--- |
+| **v1.0** | **The Core Implementation** | • **Bounded Buffer**: Thread-safe queue using Lock/Condition.<br>• **Basic Synchronization**: Wait/notify logic.<br>• **Interactive CLI**: User input support.<br>• **CI Pipeline**: Automated testing. |
+| **v2.0** | **Enhanced Concurrency** | • **Multi-Threading**: Scalable N Producers / M Consumers.<br>• **CLI Arguments**: `--producers`, `--consumers` flags.<br>• **Sequence Tracking**: Global numbering for integrity. |
+| **v2.1** | **DevOps & Robustness** | • **Dockerization**: Isolated container execution.<br>• **Structured Logging**: Thread-aware logs for debugging. |
 
 ---
 
@@ -40,33 +31,11 @@ A high-performance data analysis tool leveraging Java Streams and Functional Pro
 
 ### Version History
 
-#### **v1.0: Functional MVP**
-*   **Stream API**: Replaced imperative loops with declarative Stream pipelines (`map`, `filter`, `collect`).
-*   **Core Metrics**: Implemented 6 essential aggregations:
-    *   Total Sales Revenue
-    *   Revenue by Category
-    *   Top Selling Product
-    *   Order Count by Region
-    *   Average Unit Price
-    *   Highest Value Order
-*   **Immutable Data**: Used Java Records (`record Sale`) to enforce immutability.
-
-#### **v2.0: Enterprise Scale & Analytics**
-*   **Advanced Analytics**:
-    *   **Statistical Profiles**: Uses `DoubleSummaryStatistics` for single-pass calculation of Min/Max/Avg/Sum.
-    *   **Temporal Trends**: Aggregates sales by Month (`YYYY-MM`) for time-series analysis.
-    *   **Partitioning**: Segments data into High/Low value tiers.
-*   **Scale Architecture**:
-    *   **Chunk Processing Engine**: Implemented a lazy-loading batch processor to handle datasets larger than RAM (verified with 20,000+ rows).
-    *   **Fault Tolerance**: Built-in retry logic for failed chunks.
-
-#### **v3.0: Parity & Polish**
-*   **More Insights**: Added advanced aggregation metrics including:
-    *   **Revenue Share**: Percentage of global revenue per region.
-    *   **Unique Product Lists**: Distinct products sold per category.
-    *   **Top N Ranking**: Flexible ranking by Revenue (not just Quantity).
-*   **Interactive CLI**: Added a user-friendly menu to select between Standard and Scalable modes.
-*   **Unified Reporting**: Ensured the Chunking Engine produces the exact same high-fidelity report as the Standard engine.
+| Version | Name | Key Features |
+| :--- | :--- | :--- |
+| **v1.0** | **Functional MVP** | • **Stream API**: Declarative pipelines (`map`, `filter`).<br>• **Core Metrics**: 6 essential aggregations (Sum, Max, Count).<br>• **Immutable Data**: Java Records (`record Sale`). |
+| **v2.0** | **Scalability & Optimization** | • **Advanced Analytics**: Statistical profiles (Min/Max/Avg/Sum), Temporal trends.<br>• **Chunk Processing**: Lazy-loading engine for datasets > RAM.<br>• **Fault Tolerance**: Retry logic for failed chunks. |
+| **v3.0** | **Extended Analytics & CLI** | • **Deep Insights**: Revenue share %, Unique product lists, Top N ranking.<br>• **Interactive CLI**: Menu-driven mode selection.<br>• **Unified Reporting**: Consistent output across modes. |
 
 ---
 

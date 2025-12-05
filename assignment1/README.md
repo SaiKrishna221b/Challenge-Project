@@ -160,6 +160,30 @@ The implementation demonstrates:
 
 ## 🏗️ Architecture
 
+### Execution Flow (Mermaid Diagram)
+
+```mermaid
+sequenceDiagram
+    participant P as Producer Thread
+    participant Q as Shared Queue
+    participant C as Consumer Thread
+    
+    Note over P: Generates Item
+    P->>Q: put(Item)
+    opt Queue is Full
+        Q-->>P: waits on not_full condition
+    end
+    Q-->>C: notify(not_empty)
+    
+    Note over C: Ready to process
+    C->>Q: get()
+    opt Queue is Empty
+        Q-->>C: waits on not_empty condition
+    end
+    Q-->>P: notify(not_full)
+    C->>C: Process Item
+```
+
 ### Core Components
 
 1. **`Producer`** (`ProducerConsumer/core.py`)
