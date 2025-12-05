@@ -20,18 +20,26 @@ import java.util.stream.Collectors;
 
 /**
  * Analyzes sales data using Java Streams and functional programming.
+ * 
+ * CONCEPT: Functional Programming
+ * This class demonstrates the declarative style of programming where we describe *what* we want
+ * (filter, map, reduce) rather than *how* to do it (for-loops, if-statements).
  */
 public class SalesAnalyzer {
 
+    // Immutable list of sales for in-memory analysis
     private final List<Sale> sales;
 
     public SalesAnalyzer(List<Sale> sales) {
-        this.sales = new ArrayList<>(sales);
+        this.sales = new ArrayList<>(sales); // Defensive copy to ensure encapsulation
     }
 
     /**
-     * Loads sales data from a CSV file in the classpath resources.
-     * Uses Streams for reading and parsing.
+     * Factory method to load sales data from a CSV file.
+     * 
+     * CONCEPT: Try-With-Resources
+     * The syntax 'try (Resource r = ...)' ensures that the resource is automatically closed
+     * at the end of the block, preventing memory leaks.
      *
      * @param filename Name of the CSV file in resources
      * @return SalesAnalyzer instance populated with data
@@ -42,12 +50,16 @@ public class SalesAnalyzer {
             if (is == null) {
                 throw new IOException("File not found in resources: " + filename);
             }
+            // CONCEPT: Streams for I/O
+            // BufferedReader.lines() creates a Stream<String> that lazily reads the file.
+            // This is efficient because it doesn't load the whole file into memory at once
+            // until the terminal operation (.collect) is called.
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                 List<Sale> salesList = reader.lines()
-                        .skip(1) // Skip header
-                        .filter(line -> !line.trim().isEmpty()) // Skip empty lines
-                        .map(SalesAnalyzer::parseLine)
-                        .collect(Collectors.toList());
+                        .skip(1) // Skip the CSV header row
+                        .filter(line -> !line.trim().isEmpty()) // Filter out empty lines (Robustness)
+                        .map(SalesAnalyzer::parseLine) // Transform: String -> Sale object
+                        .collect(Collectors.toList()); // Terminal Op: Gather results into a List
                 return new SalesAnalyzer(salesList);
             }
         }
@@ -59,10 +71,10 @@ public class SalesAnalyzer {
      */
     private static Sale parseLine(String line) {
         String[] parts = line.split(",");
-        // Basic validation/parsing logic
+        // Real-world app would add more error handling here (e.g., check array length)
         return new Sale(
             parts[0].trim(),
-            LocalDate.parse(parts[1].trim()),
+            LocalDate.parse(parts[1].trim()), // Parses YYYY-MM-DD format automatically
             parts[2].trim(),
             parts[3].trim(),
             parts[4].trim(),
@@ -81,10 +93,14 @@ public class SalesAnalyzer {
 
     /**
      * Calculates total sales revenue across all records.
+     * 
+     * CONCEPT: Map-Reduce Pattern
+     * 1. mapToDouble: Transform Stream<Sale> to DoubleStream (extracts amount)
+     * 2. sum: Reduces the stream to a single value by adding them up
      */
     public double calculateTotalSales() {
         return sales.stream()
-                .mapToDouble(Sale::getTotalAmount)
+                .mapToDouble(Sale::getTotalAmount) // Method Reference: clearer than lambda (s -> s.getTotalAmount())
                 .sum();
     }
 
@@ -94,17 +110,20 @@ public class SalesAnalyzer {
 
     /**
      * Counts the number of sales transactions per region.
+     * 
+     * CONCEPT: Collectors.groupingBy
+     * Equivalent to SQL: SELECT Region, COUNT(*) FROM Sales GROUP BY Region
      */
     public Map<String, Long> getOrderCountByRegion() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
-                        Sale::region,
-                        Collectors.counting()
+                        Sale::region,        // The Key (Group by Region)
+                        Collectors.counting() // The Value (Count items in group)
                 ));
     }
 
     /**
-     * NEW: Calculates the average order value (revenue per transaction) for each region.
+     * Calculates the average order value (revenue per transaction) for each region.
      */
     public Map<String, Double> getAverageSalesByRegion() {
         return sales.stream()
@@ -115,19 +134,21 @@ public class SalesAnalyzer {
     }
 
     /**
-     * NEW: Calculates the percentage of total revenue contributed by each region.
+     * Calculates the percentage of total revenue contributed by each region.
      */
     public Map<String, Double> getRevenuePercentageByRegion() {
         double totalRevenue = calculateTotalSales();
         if (totalRevenue == 0) return new HashMap<>();
 
+        // First, calculate total revenue per region
         Map<String, Double> regionRevenue = sales.stream()
                 .collect(Collectors.groupingBy(
                         Sale::region,
                         Collectors.summingDouble(Sale::getTotalAmount)
                 ));
         
-        // Convert raw totals to percentages
+        // Then, transform those totals into percentages
+        // We create a new stream from the Map's entries to process them
         return regionRevenue.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -136,13 +157,20 @@ public class SalesAnalyzer {
     }
 
     /**
-     * NEW: Counts how many distinct product types are sold in each region.
+     * Counts how many distinct product types are sold in each region.
+     * 
+     * CONCEPT: Downstream Collectors
+     * groupingBy takes a second argument (downstream collector) to process the values in the group.
+     * Here we map to product name -> collect to Set (unique) -> get size.
      */
     public Map<String, Long> getDistinctProductCountByRegion() {
         return sales.stream()
                 .collect(Collectors.groupingBy(
                         Sale::region,
-                        Collectors.mapping(Sale::product, Collectors.collectingAndThen(Collectors.toSet(), set -> (long) set.size()))
+                        Collectors.mapping(
+                            Sale::product, 
+                            Collectors.collectingAndThen(Collectors.toSet(), set -> (long) set.size())
+                        )
                 ));
     }
 
@@ -174,6 +202,10 @@ public class SalesAnalyzer {
 
     /**
      * Advanced: Calculates comprehensive statistics (Min, Max, Avg, Sum, Count) per category.
+     * 
+     * CONCEPT: DoubleSummaryStatistics
+     * This is a high-performance collector that computes count, sum, min, max, and average
+     * in a SINGLE pass over the data. Much more efficient than iterating 5 times.
      */
     public Map<String, DoubleSummaryStatistics> getSalesStatisticsByCategory() {
         return sales.stream()
@@ -184,7 +216,7 @@ public class SalesAnalyzer {
     }
 
     /**
-     * NEW: Returns a set of unique products available in each category.
+     * Returns a set of unique products available in each category.
      */
     public Map<String, Set<String>> getUniqueProductsByCategory() {
         return sales.stream()
@@ -200,19 +232,26 @@ public class SalesAnalyzer {
 
     /**
      * Finds the top selling product based on quantity sold.
+     * 
+     * CONCEPT: Optional
+     * The result is wrapped in an 'Optional' because the list might be empty.
+     * This forces the caller to handle the "no result" case, preventing NullPointerExceptions.
      */
     public Optional<Map.Entry<String, Integer>> getTopProductByQuantity() {
         return sales.stream()
+                // 1. Calculate total quantity per product
                 .collect(Collectors.groupingBy(
                         Sale::product,
                         Collectors.summingInt(Sale::quantity)
                 ))
+                // 2. Stream the results (Map.Entry<Product, Quantity>)
                 .entrySet().stream()
+                // 3. Find the maximum by value
                 .max(Map.Entry.comparingByValue());
     }
 
     /**
-     * NEW: Finds the top N products based on total revenue generated.
+     * Finds the top N products based on total revenue generated.
      * @param limit Number of top products to return
      */
     public List<Map.Entry<String, Double>> getTopProductsByRevenue(int limit) {
@@ -222,8 +261,9 @@ public class SalesAnalyzer {
                         Collectors.summingDouble(Sale::getTotalAmount)
                 ))
                 .entrySet().stream()
+                // Sort descending by value (Revenue)
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .limit(limit)
+                .limit(limit) // Take only the top N
                 .collect(Collectors.toList());
     }
 
@@ -238,14 +278,13 @@ public class SalesAnalyzer {
         return sales.stream()
                 .collect(Collectors.groupingBy(
                         Sale::getMonthYear,
-                        LinkedHashMap::new, // Preserve order if possible (though hash map doesn't guarantee insertion order of keys, dates often sort naturally if processed in order)
+                        LinkedHashMap::new, // Use LinkedHashMap to preserve insertion order (useful if dates are sorted)
                         Collectors.summingDouble(Sale::getTotalAmount)
                 ));
-        // Note: To guarantee sorted order, we'd normally use a TreeMap, but LinkedHashMap is fine for this scope.
     }
 
     /**
-     * NEW: Aggregates sales by Year.
+     * Aggregates sales by Year.
      */
     public Map<Integer, Double> getYearlySales() {
         return sales.stream()
@@ -269,7 +308,10 @@ public class SalesAnalyzer {
 
     /**
      * Partitions orders into "High Value" and "Low Value" based on a threshold.
-     * True = High Value, False = Low Value.
+     * 
+     * CONCEPT: partitioningBy
+     * A special case of groupingBy where the key is a boolean.
+     * Returns a Map with exactly two keys: true and false.
      */
     public Map<Boolean, List<Sale>> partitionOrdersByValue(double threshold) {
         return sales.stream()
@@ -285,8 +327,9 @@ public class SalesAnalyzer {
     /**
      * ADVANCED: Processes the file in chunks to handle large datasets.
      * 
-     * Why this exists:
-     * Large files cannot fit in memory (List<Sale>). We read them in blocks (Chunks).
+     * SCALABILITY PATTERN:
+     * Large files (GBs/TBs) cannot fit in memory (List<Sale>). 
+     * We read them in blocks (Chunks) to keep memory usage constant (O(1)).
      * 
      * Logic Flow:
      * 1. Read file line-by-line (lazy stream).
@@ -300,7 +343,7 @@ public class SalesAnalyzer {
     public static void processInChunks(String filename, int chunkSize) throws IOException {
         System.out.println("--- Starting Chunked Processing (Size: " + chunkSize + ") ---");
         
-        // Accumulators for Global State
+        // Global Accumulators (State needs to be maintained across chunks)
         double globalTotalRevenue = 0;
         Map<String, Double> categoryRevenue = new HashMap<>();
         Map<String, Long> regionCounts = new HashMap<>();
@@ -318,6 +361,7 @@ public class SalesAnalyzer {
             if (is == null) throw new IOException("File not found: " + filename);
             
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                // Iterator allows us to pull lines one by one from the Stream
                 Iterator<String> lines = reader.lines().skip(1).iterator(); // Skip header
                 
                 List<Sale> batch = new ArrayList<>(chunkSize);
@@ -329,23 +373,26 @@ public class SalesAnalyzer {
                     
                     batch.add(parseLine(line));
                     
+                    // When batch is full, process it
                     if (batch.size() >= chunkSize) {
                         if (processBatchWithRetry(batch, chunkId)) {
                             totalRecords += batch.size();
                             
-                            // Aggregate Batch Results into Global State
+                            // --- Manual Aggregation Step ---
+                            // Since we processed a chunk, we must manually merge its results into the global maps.
+                            // Unlike simple Streams, we manage state explicitly here.
+                            
                             globalTotalRevenue += batch.stream().mapToDouble(Sale::getTotalAmount).sum();
                             
                             batch.forEach(s -> {
+                                // Map.merge is atomic and clean for updating counts/sums
                                 categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
                                 regionCounts.merge(s.region(), 1L, Long::sum);
                                 productQuantity.merge(s.product(), s.quantity(), Integer::sum);
                                 monthlyTrend.merge(s.getMonthYear(), s.getTotalAmount(), Double::sum);
                                 
-                                // Category Statistics (Total Amount)
+                                // Complex stats objects need computeIfAbsent
                                 categoryTotalStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.getTotalAmount());
-                                
-                                // Category Statistics (Unit Price for Average)
                                 categoryPriceStats.computeIfAbsent(s.category(), k -> new DoubleSummaryStatistics()).accept(s.unitPrice());
                             });
 
@@ -361,18 +408,17 @@ public class SalesAnalyzer {
                             failedChunks++;
                         }
                         totalChunks++;
-                        batch.clear();
+                        batch.clear(); // Reset for next chunk
                         chunkId++;
                     }
                 }
                 
-                // Process remaining
+                // Don't forget the last partial batch!
                 if (!batch.isEmpty()) {
                      if (processBatchWithRetry(batch, chunkId)) {
                          totalRecords += batch.size();
-                         // Aggregate Remaining Batch
+                         // (Repeat aggregation logic for final batch)
                          globalTotalRevenue += batch.stream().mapToDouble(Sale::getTotalAmount).sum();
-                            
                          batch.forEach(s -> {
                              categoryRevenue.merge(s.category(), s.getTotalAmount(), Double::sum);
                              regionCounts.merge(s.region(), 1L, Long::sum);
@@ -405,43 +451,37 @@ public class SalesAnalyzer {
             System.err.println("Processed " + totalChunks + " chunks. Failed: " + failedChunks);
         }
 
+        // Print results (reuses standard output format)
         System.out.println("\n=====================================");
         System.out.println("       SALES DATA ANALYSIS");
         System.out.println("=====================================");
 
-        // 1. Total Sales
         System.out.println("\n1. Total Sales Revenue:");
         System.out.printf("   $%.2f%n", globalTotalRevenue);
 
-        // 2. Sales by Category
         System.out.println("\n2. Total Sales by Category:");
         categoryRevenue.forEach((category, revenue) -> 
             System.out.printf("   %s: $%.2f%n", category, revenue));
 
-        // 3. Top Product
         System.out.println("\n3. Top Selling Product (by Quantity):");
         productQuantity.entrySet().stream()
             .max(Map.Entry.comparingByValue())
             .ifPresent(entry -> System.out.println("   " + entry.getKey() + " (" + entry.getValue() + " units)"));
 
-        // 4. Region Count
         System.out.println("\n4. Orders by Region:");
         regionCounts.forEach((region, count) -> 
             System.out.println("   " + region + ": " + count + " orders"));
 
-        // 5. Average Sales (Unit Price)
         System.out.println("\n5. Average Unit Price by Category:");
         categoryPriceStats.forEach((category, stats) -> 
             System.out.printf("   %s: $%.2f%n", category, stats.getAverage()));
 
-        // 6. Highest Order
         System.out.println("\n6. Highest Value Order:");
         if (highestValueOrder != null) {
             System.out.printf("   ID: %s | Product: %s | Amount: $%.2f%n", 
                 highestValueOrder.transactionId(), highestValueOrder.product(), highestValueOrder.getTotalAmount());
         }
 
-        // 7. Advanced Statistics
         System.out.println("\n7. Detailed Statistics by Category:");
         categoryTotalStats.forEach((category, stats) -> {
             System.out.println("   " + category + ":");
@@ -449,7 +489,6 @@ public class SalesAnalyzer {
                 stats.getCount(), stats.getMin(), stats.getMax(), stats.getAverage());
         });
 
-        // 8. Monthly Trend
         System.out.println("\n8. Monthly Sales Trend:");
         monthlyTrend.forEach((month, total) -> 
             System.out.printf("   %s: $%.2f%n", month, total));
@@ -459,6 +498,13 @@ public class SalesAnalyzer {
         System.out.println("=============================================");
     }
 
+    /**
+     * Helper to process a single batch with retry logic.
+     * 
+     * CONCEPT: Fault Tolerance
+     * In distributed systems or large batch jobs, transient failures (network blips, I/O locks) happen.
+     * Instead of crashing the whole job, we retry a few times.
+     */
     private static boolean processBatchWithRetry(List<Sale> batch, int chunkId) {
         int retries = 3;
         while (retries > 0) {

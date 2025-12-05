@@ -160,6 +160,68 @@ The implementation demonstrates:
 
 ## 🏗️ Architecture
 
+### Class Structure Diagram
+
+```mermaid
+classDiagram
+    class Main {
+        <<Entry Point>>
+        %% Just a bridge to CLI
+    }
+
+    class CLI {
+        +run_simulation()
+        +parse_args()
+        +main()
+        %% User Interface & Configuration
+    }
+
+    class SimulationManager {
+        -queue: Queue
+        -producers: List
+        -consumers: List
+        -sequence_counter: Lock
+        
+        +__init__(items, capacity, ...)
+        +run() List~WorkItem~
+        -_distribute_items()
+        %% The "Boss" - Orchestrates everything
+    }
+
+    class Producer {
+        <<Thread>>
+        -source_ids: List~int~
+        -shared_queue: Queue
+        +run()
+        %% The "Worker" - Creates data
+    }
+
+    class Consumer {
+        <<Thread>>
+        -shared_queue: Queue
+        -local_destination: List
+        +run()
+        +get_destination()
+        %% The "Worker" - Processes data
+    }
+
+    class WorkItem {
+        <<Data Class>>
+        +item_id: int
+        +sequence_number: int
+        %% Immutable Data Packet
+    }
+
+    Main ..> CLI : Calls
+    CLI ..> SimulationManager : Configures & Runs
+    SimulationManager *-- Producer : Manages
+    SimulationManager *-- Consumer : Manages
+    Producer ..> WorkItem : Creates
+    Producer --|> Queue : Puts
+    Consumer --|> Queue : Gets
+    Consumer ..> WorkItem : Stores
+```
+
 ### Execution Flow (Mermaid Diagram)
 
 ```mermaid
@@ -480,4 +542,3 @@ This is an educational project. Feel free to:
 ---
 
 **Note**: This implementation uses `queue.Queue` which abstracts away the low-level wait/notify mechanisms. The code includes detailed comments explaining how these mechanisms work internally. For educational purposes, you could also implement a custom bounded buffer using `threading.Condition` directly to see the wait/notify pattern more explicitly.
-

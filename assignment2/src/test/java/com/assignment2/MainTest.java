@@ -9,8 +9,16 @@ import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for the Main entry point logic.
+ * 
+ * Why verify Main?
+ * We need to ensure that command-line arguments (or lack thereof) correctly 
+ * trigger the appropriate execution modes (Standard vs. Chunking) without crashing.
+ */
 class MainTest {
 
+    // Streams to capture Console Output/Error for assertion
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
@@ -18,44 +26,58 @@ class MainTest {
 
     @BeforeEach
     void setUp() {
+        // Hijack the system output streams before each test
         System.setOut(new PrintStream(outContent));
         System.setErr(new PrintStream(errContent));
     }
 
     @AfterEach
     void restoreStreams() {
+        // Restore them so we can see test results in the console
         System.setOut(originalOut);
         System.setErr(originalErr);
     }
 
     @Test
     void testMainWithChunkSizeArgument() {
-        // Simulate running "java Main 5000"
+        /*
+         * Scenario: Run with "5000" as an argument.
+         * Expected: The app detects the arg and launches Chunk Mode automatically.
+         */
         Main.main(new String[]{"5000"});
 
         String output = outContent.toString();
 
-        // Should trigger Chunking Mode
-        assertTrue(output.contains("--- Starting Chunked Processing (Size: 5000) ---"));
-        // Should NOT show the menu
-        assertFalse(output.contains("Select Execution Mode"));
-        // Should finish successfully
+        // Verify the mode selection logic
+        assertTrue(output.contains("--- Starting Chunked Processing (Size: 5000) ---"), 
+            "Should have started chunk processing with size 5000");
+            
+        // Verify it didn't try to ask for user input
+        assertFalse(output.contains("Select Execution Mode"), 
+            "Interactive menu should not appear in CLI argument mode");
+            
+        // Verify it completed
         assertTrue(output.contains("Status: SUCCESS"));
     }
 
     @Test
     void testMainWithInvalidArgument() {
-        // Simulate running "java Main banana"
+        /*
+         * Scenario: Run with "banana" as an argument.
+         * Expected: The app catches the NumberFormatException, prints an error,
+         * and safely falls back to Standard Mode.
+         */
         Main.main(new String[]{"banana"});
 
         String errOutput = errContent.toString();
         String stdOutput = outContent.toString();
 
-        // Should warn about invalid argument
-        assertTrue(errOutput.contains("Invalid argument. Defaulting to Standard Mode."));
+        // Verify Error Handling
+        assertTrue(errOutput.contains("Invalid argument provided (not a number)"), 
+            "Should print error message to stderr");
         
-        // Should fall back to Standard Mode (loading all data)
-        assertTrue(stdOutput.contains("--- Loading Sales Data ---"));
+        // Verify Fallback Behavior
+        assertTrue(stdOutput.contains("--- Loading Sales Data ---"), 
+            "Should fall back to Standard Analysis");
     }
 }
-

@@ -16,13 +16,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for the Advanced Chunking Engine.
- * Verifies that batch processing produces the same results as standard processing.
+ * 
+ * Purpose:
+ * Validate that processing data in small "chunks" (batches) yields the 
+ * correct results, proving the system is scalable for Big Data scenarios.
  */
 class ChunkingTest {
 
+    // Capture System.out to verify console output
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
+    // JUnit 5 TempDir: Automatically creates and cleans up a temp folder
     @TempDir
     Path tempDir;
 
@@ -30,10 +35,10 @@ class ChunkingTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // Redirect System.out to capture output
+        // Redirect System.out to capture what the application prints
         System.setOut(new PrintStream(outContent));
 
-        // Create a temporary CSV file with known data
+        // Create a sample CSV file for controlled testing
         testCsvPath = tempDir.resolve("test_sales_chunking.csv");
         List<String> lines = List.of(
             "TransactionId,Date,Category,Product,Region,Quantity,UnitPrice",
@@ -47,56 +52,48 @@ class ChunkingTest {
 
     @AfterEach
     void restoreStreams() {
+        // Restore stdout so we can see normal logs again
         System.setOut(originalOut);
     }
 
     @Test
     void testProcessInChunks_SmallBatchSize() throws IOException {
-        // We cannot test "processInChunks" directly easily because it reads from ClassPath resources
-        // and we just created a file on the filesystem.
-        // However, checking the code, "processInChunks" takes a filename string and looks in Resources.
-        // To make this testable without modifying the main code to accept File objects, 
-        // we can't easily inject the temp file unless we put it in target/classes.
-        
-        // STRATEGY CHANGE: 
-        // Since we can't modify classpath at runtime easily, we will rely on the fact that
-        // SalesAnalyzer.fromCsv works, and we are testing the LOGIC parity.
-        // But `processInChunks` is static and void.
-        
-        // To really test this properly, we would need to refactor `processInChunks` to accept an InputStream.
-        // Since we want to minimize code changes, we'll skip the file-based test here 
-        // and instead verify that the main logic components exist.
-        
-        // If you want to run this test, we must ensure "sales_data.csv" exists in resources, 
-        // which it does (the big 20k file).
-        // We can run the chunk processor on the REAL file with a weird chunk size.
-        
+        /*
+         * Scenario: Process the main 20,000 record file in batches of 5000.
+         * 
+         * Expected:
+         * 1. 4 full chunks processed (20000 / 5000 = 4).
+         * 2. Final stats match the known truth (Total: $110M+).
+         */
         SalesAnalyzer.processInChunks("sales_data.csv", 5000);
         
         String output = outContent.toString();
         
-        // Verify Output Format
+        // Verify Process Flow
         assertTrue(output.contains("--- Starting Chunked Processing"));
-        assertTrue(output.contains("Processed 4 chunks")); // 20000 / 5000 = 4
+        assertTrue(output.contains("Processed 4 chunks"));
         assertTrue(output.contains("Status: SUCCESS"));
         
-        // Verify Key Metrics (we know the total from previous runs: $110,407,964.25)
-        assertTrue(output.contains("$110407964.25"));
-        assertTrue(output.contains("Hat (4638 units)"));
+        // Verify Data Accuracy
+        assertTrue(output.contains("$110407964.25"), "Total Revenue incorrect");
+        assertTrue(output.contains("Hat (4638 units)"), "Top Product incorrect");
     }
     
     @Test
     void testProcessInChunks_TinyBatch() throws IOException {
-        // Stress test with tiny batches to ensure boundary conditions work
-        // 20000 records, batch size 1999 (creates a remainder)
+        /*
+         * Scenario: Boundary Test with weird batch size (1999).
+         * 
+         * Why: This forces a "remainder" chunk at the end.
+         * 20000 / 1999 = 10 full chunks + 1 partial chunk of 10 items.
+         * Total chunks = 11.
+         */
         SalesAnalyzer.processInChunks("sales_data.csv", 1999);
         
         String output = outContent.toString();
         
         assertTrue(output.contains("Status: SUCCESS"));
-        // 20000 / 1999 = 10 chunks + 1 remainder = 11 chunks total
-        assertTrue(output.contains("Processed 11 chunks")); 
-        assertTrue(output.contains("$110407964.25"));
+        assertTrue(output.contains("Processed 11 chunks"), "Expected 11 chunks (10 full + 1 partial)"); 
+        assertTrue(output.contains("$110407964.25"), "Total Revenue incorrect");
     }
 }
-

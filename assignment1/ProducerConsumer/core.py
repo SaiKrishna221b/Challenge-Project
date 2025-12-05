@@ -20,7 +20,21 @@ class Producer(threading.Thread):
                  sequence_counter: Optional[threading.Lock] = None,
                  sequence_value: Optional[List[int]] = None,
                  name: str = "Producer"):
+        """
+        Initialize the Producer thread.
+        
+        Args:
+            source_ids: The list of raw integers this specific producer is responsible for processing.
+            shared_queue: The thread-safe buffer where processed WorkItems are placed.
+            sequence_counter: A shared Lock to ensure only one thread updates the global sequence at a time.
+            sequence_value: A shared mutable list (acting as a pointer) holding the current global sequence number.
+            name: A human-readable identifier for this thread (e.g., "Producer-1").
+        """
+        # CRITICAL: Initialize the parent Thread class first.
+        # This sets up the internal thread state so .start() and .join() work correctly.
+        # We pass 'name' so logs show "Producer-1" instead of "Thread-5".
         super().__init__(name=name)
+        
         self.source_ids = source_ids
         self.shared_queue = shared_queue
         self.sequence_counter = sequence_counter  # Guards the shared sequence counter
@@ -28,10 +42,21 @@ class Producer(threading.Thread):
         self.logger = logging.getLogger(__name__)
 
     def run(self) -> None:
-        """Emit items from the assigned source chunk and hand them to the queue."""
+        """
+        The main execution loop for the Producer thread.
+        
+        1. Iterates through its assigned 'source_ids'.
+        2. Acquires a global lock to generate a unique sequence number.
+        3. Wraps the data into a 'WorkItem'.
+        4. Places the item into the 'shared_queue'.
+           - IMPORTANT: This is a BLOCKING operation.
+           - If the queue is full, this thread sleeps until space is available.
+        """
         self.logger.info("Starting")
         for item_id in self.source_ids:
-            # Stamp each item with a globally increasing sequence number
+            # STEP 1: Generate Global Sequence Number
+            # We use a Lock (sequence_counter) to ensure no two threads grab the same number.
+            
             if self.sequence_counter and self.sequence_value:
                 with self.sequence_counter:
                     seq_num = self.sequence_value[0]
@@ -39,9 +64,15 @@ class Producer(threading.Thread):
             else:
                 seq_num = 0  # Fallback path when sequence bookkeeping is disabled
             
+            # STEP 2: Create Immutable Work Item
             item = WorkItem(item_id, sequence_number=seq_num)
+            
+            # STEP 3: Add to Shared Buffer (Critical Synchronization Point)
             # BLOCKS if full (Internally calls not_full.wait() to release lock)
+            # The Producer thread will pause here if the Consumer is too slow.
             self.shared_queue.put(item)
+            
+            # Logging state for debugging
             buffer_after = self.shared_queue.qsize()
             buffer_before = buffer_after - 1  # Derive the before-state while we hold the slot
             # Pad single-digit IDs for nicer log alignment
@@ -51,13 +82,23 @@ class Producer(threading.Thread):
             )
         
         self.logger.info("Finished production")
-        # STOP signals are injected by the manager once every producer is done
+        # Note: This producer is done, but the Consumers might still be working.
+        # We don't stop them here; the Manager handles that coordination.
 
 class Consumer(threading.Thread):
     """Drains WorkItems from the shared queue into a private buffer."""
     
     def __init__(self, shared_queue: queue.Queue, name: str = "Consumer"):
+        """
+        Initialize the Consumer thread.
+        
+        Args:
+            shared_queue: The common buffer to read WorkItems from.
+            name: Identifier for logs (e.g., "Consumer-1").
+        """
+        # Initialize the parent thread to set up threading machinery
         super().__init__(name=name)
+        
         self.shared_queue = shared_queue
         self.local_destination: List[WorkItem] = []  # Local buffer keeps locking simple
         self.logger = logging.getLogger(__name__)
@@ -67,25 +108,46 @@ class Consumer(threading.Thread):
         return self.local_destination
 
     def run(self) -> None:
-        """Drain queue items until the manager posts our STOP signal."""
+        """
+        The main execution loop for the Consumer thread.
+        
+        This loop runs indefinitely until it receives a specific 'Sentinel' (STOP_SIGNAL).
+        
+        Workflow:
+        1. Wait for an item in the queue (Blocking).
+        2. Check if it is the STOP_SIGNAL.
+        3. If real item, process it (store in local list).
+        4. Signal the queue that work is done (task_done).
+        """
         self.logger.info("Starting")
         while True:
+            # STEP 1: Retrieve Item (Blocking)
             # BLOCKS if empty (Internally calls not_empty.wait() to release lock)
+            # The thread sleeps here if the Producer is slower than the Consumer.
             item = self.shared_queue.get()
+            
             buffer_after = self.shared_queue.qsize()
             buffer_before = buffer_after + 1  # Capture the before-state while we own the slot
             
+            # STEP 2: Check for Sentinel (Termination Condition)
             if item is STOP_SIGNAL:
                 self.logger.info(f"Received STOP_SIGNAL. Quitting.  |  Buffer: {buffer_before} -> {buffer_after}")
                 self.shared_queue.task_done()
                 break
             
+            # STEP 3: Process Item
+            # In a real app, this is where expensive calculation would happen.
+            # Here, we just store it to verify correctness later.
             self.local_destination.append(item)
-            # Pad single-digit IDs for nicer log alignment
+            
+            # Logging
             spacing = "   " if item.item_id < 10 else "  "
             self.logger.info(
                 f"Consumed WorkItem(id={item.item_id}){spacing}|  Buffer: {buffer_before} -> {buffer_after}"
             )
+            
+            # STEP 4: Acknowledge Processing
+            # Important for .join() on the queue to work correctly (though we don't use queue.join() here explicitly)
             self.shared_queue.task_done()
 
 class SimulationManager:
@@ -128,7 +190,15 @@ class SimulationManager:
         self.destination_data: List[WorkItem] = []
     
     def _distribute_items(self) -> List[List[int]]:
-        """Return balanced slices so producers split the work as evenly as possible."""
+        """
+        Slice the source data into balanced chunks for the producers.
+        
+        Example: 
+            Items=10, Producers=3
+            Returns: [[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]
+        
+        This ensures work is distributed as evenly as possible (load balancing).
+        """
         source_data = list(range(1, self.number_of_items + 1))
         chunk_size = self.number_of_items // self.num_producers
         remainder = self.number_of_items % self.num_producers
@@ -144,12 +214,25 @@ class SimulationManager:
         return chunks
 
     def run(self) -> List[WorkItem]:
-        """Spin up the configured threads and return results sorted by sequence number."""
+        """
+        Execute the full simulation lifecycle.
+        
+        Phases:
+        1. Setup: Reset state, initialize queues and buffers.
+        2. Launch: Create and start N Producers and M Consumers.
+        3. Monitor Producers: Wait for all producers to finish generating items.
+        4. Signal Shutdown: Inject 'Sentinels' (STOP_SIGNAL) for consumers.
+        5. Monitor Consumers: Wait for consumers to process remaining items and stop.
+        6. Aggregation: Merge results from all consumers and sort by sequence.
+        """
         # Reset mutable state so the manager can be reused safely
         self.sequence_value[0] = 0
         self.destination_data.clear()
         self.queue = queue.Queue(maxsize=self.queue_capacity)
 
+        # PHASE 1: Create Threads
+        # -----------------------
+        
         # Create producers
         producers = []
         for i, source_chunk in enumerate(self.source_data_chunks):
@@ -171,24 +254,36 @@ class SimulationManager:
             )
             consumers.append(consumer)
         
-        # Launch everyone
+        # PHASE 2: Start Threads
+        # ----------------------
+        # Once started, they run independently in parallel.
         for producer in producers:
             producer.start()
         for consumer in consumers:
             consumer.start()
         
-        # Wait for every producer to exhaust its chunk
+        # PHASE 3: Wait for Production
+        # ----------------------------
+        # We block here until every producer has finished its assigned chunk.
         for producer in producers:
             producer.join()
         
-        # Post one STOP signal per consumer once production stops
+        # PHASE 4: Initiate Shutdown (Sentinel)
+        # ----------------------------------------
+        # Post one STOP signal per consumer. This is safer than checking "queue empty"
+        # because the queue might be momentarily empty while producers are still working.
+        # Since producers are joined (finished), we know no real items are coming after this.
         for _ in range(self.num_consumers):
             self.queue.put(STOP_SIGNAL)
         
-        # Drain consumers once they acknowledge the sentinel
+        # PHASE 5: Wait for Consumption
+        # -----------------------------
+        # Consumers will process the remaining buffer, hit the STOP_SIGNAL, and exit.
         for consumer in consumers:
             consumer.join()
         
+        # PHASE 6: Aggregate Results
+        # --------------------------
         # Merge each consumer's private buffer
         all_results = []
         for consumer in consumers:
